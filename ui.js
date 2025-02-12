@@ -33,6 +33,7 @@ function setupInfoPanelToggle() {
   });
 
   // Setup event listeners for location search and sorting.
+  // (These controls are defined in your template under #locationControls)
   document.getElementById("locationSearch").addEventListener("input", renderLocationList);
   document.getElementById("locationSort").addEventListener("change", renderLocationList);
 }
@@ -55,28 +56,32 @@ async function loadNPBoundariesData() {
 }
 
 async function renderLocationList() {
-  const infoContent = document.getElementById("infoContent");
-  // If NP boundaries data is not loaded, load it.
+  // Only update the list area (infoContent); the search/sort controls remain intact.
+  const listContainer = document.getElementById("infoContent");
+
+  // Ensure NP boundaries data is loaded.
   if (!window.nationalParksData || !window.nationalParksData.features || window.nationalParksData.features.length === 0) {
-    infoContent.innerHTML = "<p>Location data is loading. Please wait...</p>";
+    listContainer.innerHTML = "<p>Location data is loading. Please wait...</p>";
     const success = await loadNPBoundariesData();
     if (!success) {
-      infoContent.innerHTML = "<p>Error loading location data.</p>";
+      listContainer.innerHTML = "<p>Error loading location data.</p>";
       return;
     }
   }
-  
+
   let locations = window.nationalParksData.features.slice();
-  const searchValue = document.getElementById("locationSearch").value.toLowerCase();
+
+  // Retrieve search and sort values from existing controls.
+  const searchValue = document.getElementById("locationSearch").value.trim().toLowerCase();
   const sortOption = document.getElementById("locationSort").value;
-  
+
   // Filter locations based on search input.
   if (searchValue) {
     locations = locations.filter(feature =>
       feature.properties.unit_name.toLowerCase().includes(searchValue)
     );
   }
-  
+
   // Sort locations.
   locations.sort((a, b) => {
     const nameA = a.properties.unit_name.toLowerCase();
@@ -87,8 +92,8 @@ async function renderLocationList() {
     if (sortOption === "smallest") return (a.properties.area || 0) - (b.properties.area || 0);
     return 0;
   });
-  
-  // Remove duplicate locations (by unit_name).
+
+  // Remove duplicate locations by unit_name.
   const uniqueLocationsMap = {};
   locations.forEach(feature => {
     const name = feature.properties.unit_name;
@@ -97,22 +102,23 @@ async function renderLocationList() {
     }
   });
   const uniqueLocations = Object.values(uniqueLocationsMap).slice(0, 20);
-  
-  // Build HTML for the location list, skipping features with invalid geometry.
-  let html = "<ul class='location-list' style='list-style: none; padding: 0; margin: 0;'>";
+
+  // Build the list HTML matching the case list styling.
+  let listHTML = "<ul style='list-style: none; padding: 0; margin: 0;'>";
   uniqueLocations.forEach(feature => {
     try {
       const parkName = feature.properties.unit_name;
       const tempLayer = L.geoJSON(feature);
       const bounds = tempLayer.getBounds();
-      // Validate bounds.
       if (bounds && typeof bounds.getWest === "function") {
-        // Instead of using toBBoxString (which returned a string with commas),
-        // store bounds as an array of numbers: [west, south, east, north].
-        const west = bounds.getWest(), south = bounds.getSouth(), east = bounds.getEast(), north = bounds.getNorth();
+        const west = bounds.getWest(),
+              south = bounds.getSouth(),
+              east = bounds.getEast(),
+              north = bounds.getNorth();
         if (isFinite(west) && isFinite(south) && isFinite(east) && isFinite(north)) {
           const bboxArray = [west, south, east, north];
-          html += `<li class="location-item" data-bounds='${JSON.stringify(bboxArray)}' style="cursor: pointer; margin-bottom: 5px;">${parkName}</li>`;
+          // Each list item is an anchor styled like the case list items.
+          listHTML += `<li style="margin-bottom: 5px;"><a href="#" class="locationLink" data-bounds='${JSON.stringify(bboxArray)}' style="color: #0073aa; text-decoration: none;">${parkName}</a></li>`;
         } else {
           console.warn("Invalid bounds values for feature:", feature);
         }
@@ -123,13 +129,14 @@ async function renderLocationList() {
       console.error("Error processing feature:", feature, error);
     }
   });
-  html += "</ul>";
-  infoContent.innerHTML = html;
-  
-  // Add click event listeners to each location.
-  document.querySelectorAll(".location-item").forEach(item => {
-    item.addEventListener("click", function() {
-      // Activate NP Boundaries toggle if not active.
+  listHTML += "</ul>";
+  listContainer.innerHTML = listHTML;
+
+  // Attach click events to each location link.
+  document.querySelectorAll(".locationLink").forEach(link => {
+    link.addEventListener("click", function(e) {
+      e.preventDefault();
+      // Toggle NP Boundaries if not active.
       const npToggle = document.getElementById("npBoundariesToggleButton");
       if (npToggle && npToggle.innerHTML.trim() !== "Remove NP Boundaries") {
         npToggle.click();
