@@ -56,11 +56,14 @@ async function loadNPBoundariesData() {
 }
 
 async function renderLocationList() {
-  // Only update the list area (infoContent); the search/sort controls remain intact.
   const listContainer = document.getElementById("infoContent");
 
   // Ensure NP boundaries data is loaded.
-  if (!window.nationalParksData || !window.nationalParksData.features || window.nationalParksData.features.length === 0) {
+  if (
+    !window.nationalParksData ||
+    !window.nationalParksData.features ||
+    window.nationalParksData.features.length === 0
+  ) {
     listContainer.innerHTML = "<p>Location data is loading. Please wait...</p>";
     const success = await loadNPBoundariesData();
     if (!success) {
@@ -103,27 +106,26 @@ async function renderLocationList() {
   });
   const uniqueLocations = Object.values(uniqueLocationsMap).slice(0, 20);
 
-  // Build the list HTML matching the case list styling.
+  // Build the list HTML matching the case list styling, and include a data-index.
   let listHTML = "<ul style='list-style: none; padding: 0; margin: 0;'>";
-  uniqueLocations.forEach(feature => {
+  uniqueLocations.forEach((feature, idx) => {
     try {
       const parkName = feature.properties.unit_name;
       const tempLayer = L.geoJSON(feature);
       const bounds = tempLayer.getBounds();
       if (bounds && typeof bounds.getWest === "function") {
         const west = bounds.getWest(),
-              south = bounds.getSouth(),
-              east = bounds.getEast(),
-              north = bounds.getNorth();
+          south = bounds.getSouth(),
+          east = bounds.getEast(),
+          north = bounds.getNorth();
         if (isFinite(west) && isFinite(south) && isFinite(east) && isFinite(north)) {
           const bboxArray = [west, south, east, north];
-          // Each list item is an anchor styled like the case list items.
-          listHTML += `<li style="margin-bottom: 5px;"><a href="#" class="locationLink" data-bounds='${JSON.stringify(bboxArray)}' style="color: #0073aa; text-decoration: none;">${parkName}</a></li>`;
-        } else {
-          console.warn("Invalid bounds values for feature:", feature);
+          listHTML += `<li style="margin-bottom: 5px;">
+                         <a href="#" class="locationLink" data-index="${idx}" data-bounds='${JSON.stringify(bboxArray)}' style="color: #0073aa; text-decoration: none;">
+                           ${parkName}
+                         </a>
+                       </li>`;
         }
-      } else {
-        console.warn("Invalid bounds for feature:", feature);
       }
     } catch (error) {
       console.error("Error processing feature:", feature, error);
@@ -134,13 +136,20 @@ async function renderLocationList() {
 
   // Attach click events to each location link.
   document.querySelectorAll(".locationLink").forEach(link => {
-    link.addEventListener("click", function(e) {
+    link.addEventListener("click", function (e) {
       e.preventDefault();
+
       // Toggle NP Boundaries if not active.
       const npToggle = document.getElementById("npBoundariesToggleButton");
       if (npToggle && npToggle.innerHTML.trim() !== "Remove NP Boundaries") {
         npToggle.click();
       }
+
+      // Retrieve the feature using the data-index.
+      const idx = parseInt(this.getAttribute("data-index"), 10);
+      const feature = uniqueLocations[idx];
+
+      // Zoom the map using bounds from the data-bounds attribute.
       const bboxArray = JSON.parse(this.getAttribute("data-bounds"));
       if (bboxArray && bboxArray.length === 4) {
         const [west, south, east, north] = bboxArray;
@@ -151,7 +160,35 @@ async function renderLocationList() {
           window.map.fitBounds(bounds);
         }
       }
+
+      // Show the detailed view for the selected location.
+      showLocationDetailView(feature);
     });
+  });
+}
+
+function showLocationDetailView(feature) {
+  const infoContent = document.getElementById("infoContent");
+  let html = `<button id="backToLocationList" style="margin-bottom: 10px;">Back to List</button>`;
+  html += `<h3 style="margin-bottom: 15px;">${feature.properties.unit_name}</h3>`;
+  
+  // Optionally show additional details if available.
+  if (feature.properties.area) {
+    html += `<p><strong>Area:</strong> ${feature.properties.area}</p>`;
+  }
+  if (feature.properties.description) {
+    html += `<p>${feature.properties.description}</p>`;
+  }
+  
+  infoContent.innerHTML = html;
+  
+  // Attach event listener to the Back button to return to the Location List.
+  document.getElementById("backToLocationList").addEventListener("click", () => {
+    // Reset the map view to the default center and zoom.
+    if (window.map) {
+      window.map.setView([39.8283, -98.5795], 4);
+    }
+    renderLocationList();
   });
 }
 
