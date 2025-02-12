@@ -4,7 +4,12 @@ import { trailsConfig, addParkTrailsToggleButton, removeParkTrailsToggleButton }
 
 export function toggleNPBoundaries(map, npRef, button) {
   if (npRef.layer && map.hasLayer(npRef.layer)) {
+    // Remove the NP boundaries layer.
     map.removeLayer(npRef.layer);
+    // Remove any trails overlays and hide their toggle buttons.
+    Object.keys(trailsConfig).forEach(key => {
+      removeParkTrailsToggleButton(map, key);
+    });
     button.innerHTML = "NP Boundaries";
     npRef.layer = null;
   } else {
@@ -47,6 +52,8 @@ export function toggleNPBoundaries(map, npRef, button) {
           map.addLayer(layer);
           npRef.layer = layer;
           npRef.nationalParksData = geojsonData;
+          // Store the NP boundaries data globally for use in the location list.
+          window.nationalParksData = geojsonData;
           button.innerHTML = "Remove NP Boundaries";
         })
         .catch(error => console.error("Error loading NP Boundaries GeoJSON:", error));

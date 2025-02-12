@@ -121,35 +121,38 @@ html, body {
 
   <!-- Map Container -->
   <div id="map">
-    <div id="terrainToggleButton" style="position:absolute; top:10px; right:10px;">Terrain</div>
-    <div id="satelliteToggleButton" style="position:absolute; top:10px; right:90px;">Satellite</div>
-    <div id="npBoundariesToggleButton" style="position:absolute; top:50px; right:10px;">NP Boundaries</div>
-    <div id="statesToggleButton" style="position:absolute; top:90px; right:10px;">States</div>
-    <div id="heatMapToggleButton" style="position:absolute; top:130px; right:10px;">Heat Map</div>
+    <div id="terrainToggleButton" style="position:absolute; top:10px; right:10px; background: rgba(255,255,255,0.95); border: 1px solid #ccc; padding: 5px 10px; z-index:1000;">Terrain</div>
+    <div id="satelliteToggleButton" style="position:absolute; top:10px; right:90px; background: rgba(255,255,255,0.95); border: 1px solid #ccc; padding: 5px 10px; z-index:1000;">Satellite</div>
+    <div id="npBoundariesToggleButton" style="position:absolute; top:50px; right:10px; background: rgba(255,255,255,0.95); border: 1px solid #ccc; padding: 5px 10px; z-index:1000;">NP Boundaries</div>
+    <div id="statesToggleButton" style="position:absolute; top:90px; right:10px; background: rgba(255,255,255,0.95); border: 1px solid #ccc; padding: 5px 10px; z-index:1000;">States</div>
+    <div id="heatMapToggleButton" style="position:absolute; top:130px; right:10px; background: rgba(255,255,255,0.95); border: 1px solid #ccc; padding: 5px 10px; z-index:1000;">Heat Map</div>
     <!-- The Expand Map button will be appended by JavaScript into the zoom control -->
   </div>
 
   <!-- Info Panel -->
   <div id="info">
-    <div id="infoHeader" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-      <h2>Case List</h2>
-      <div>
-        <button id="switchToLocations" style="display:inline-block;">Switch to Locations</button>
-        <button id="switchToCases" style="display:none;">Switch to Cases</button>
-      </div>
+  <div id="infoHeader" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <h2>Case List</h2>
+    <div>
+      <button id="switchToLocations" style="display: block !important; background: #0073aa; color: #fff; border: none; padding: 5px 10px; cursor: pointer; margin-right: 5px;">
+        Switch to Locations
+      </button>
+      <button id="switchToCases" style="display: none !important; background: #0073aa; color: #fff; border: none; padding: 5px 10px; cursor: pointer;">
+        Switch to Cases
+      </button>
     </div>
-    <div id="locationControls" style="display:none; margin-bottom: 10px;">
-      <input type="text" id="locationSearch" placeholder="Search locations" style="width:70%; padding:5px;" />
-      <select id="locationSort" style="padding:5px;">
-        <option value="az">A to Z</option>
-        <option value="za">Z to A</option>
-        <option value="largest">Largest to Smallest</option>
-        <option value="smallest">Smallest to Largest</option>
-      </select>
-    </div>
-    <div id="infoContent">
-      <!-- Case list or location list content will be injected here -->
-    </div>
+  </div>
+  <div id="locationControls" style="display: none; margin-bottom: 10px;">
+    <input type="text" id="locationSearch" placeholder="Search locations" style="width:70%; padding:5px;" />
+    <select id="locationSort" style="padding:5px;">
+      <option value="az">A to Z</option>
+      <option value="za">Z to A</option>
+      <option value="largest">Largest to Smallest</option>
+      <option value="smallest">Smallest to Largest</option>
+    </select>
+  </div>
+  <div id="infoContent">
+    <!-- Case list or location list content will be injected here -->
   </div>
 </div>
 

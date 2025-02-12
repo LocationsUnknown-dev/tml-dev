@@ -79,7 +79,7 @@ function showDetailView(item) {
   const infoDiv = document.getElementById("info");
   infoDiv.innerHTML = `<button id="backButton" style="margin-bottom: 10px;">Back to List</button><h3 style="margin-bottom: 15px;">Data Point Details</h3>${popupContent}`;
   document.getElementById("backButton").addEventListener("click", () => {
-    populateNamesList();
+    window.populateNamesList();
     map.setView([39.8283, -98.5795], 4);
   });
   const lat = parseFloat(item.latitude);
@@ -89,10 +89,11 @@ function showDetailView(item) {
   }
 }
 
+// This function renders the case list into the content area only.
+// It no longer replaces the entire Info panel so that the header remains intact.
 function populateNamesList() {
-  const infoDiv = document.getElementById("info");
-  infoDiv.innerHTML = `
-    <h3 style="margin-bottom: 15px;">Case List</h3>
+  const infoContent = document.getElementById("infoContent");
+  infoContent.innerHTML = `
     <div id="namesSearch" style="margin-bottom: 10px;">
       <input type="text" id="nameSearch" placeholder="Search names..." style="width: 100%; padding: 5px; margin-bottom: 5px;" value="${currentNameSearch}" />
       <select id="sortOption" style="width: 100%; padding: 5px;">
@@ -152,7 +153,6 @@ function filterData() {
   const ageSliderValue = parseFloat(document.getElementById("age").value);
   const dateSliderValue = parseInt(document.getElementById("dateSlider").value);
   const genderFilter = document.getElementById("gender").value;
-  // UPDATED: Use the summary field for filtering.
   const summaryFilter = document.getElementById("summary").value.trim().toLowerCase();
   const parkFilter = document.getElementById("park").value.trim().toLowerCase();
   return missingData.filter(item => {
@@ -185,7 +185,6 @@ function updateMapForFilters() {
   }
   document.getElementById("caseTotal").textContent = filtered.length;
   
-  // If a park filter is applied and NP boundaries data is available, zoom to matching feature.
   const parkFilterValue = document.getElementById("park").value.trim().toLowerCase();
   if (parkFilterValue && npBoundariesRef.nationalParksData && npBoundariesRef.nationalParksData.features) {
     const matchingFeature = npBoundariesRef.nationalParksData.features.find(feature =>
@@ -199,14 +198,20 @@ function updateMapForFilters() {
   }
 }
 
-// Initialize map and extract objects.
+// ----------------------------------------------------------------------
+// Map Initialization and Global Setup
+// ----------------------------------------------------------------------
 const { map, defaultTileLayer, terrainTileLayer, satelliteTileLayer, markerCluster } = initMap();
-window.map = map; // Expose globally if needed
+window.map = map; // Expose globally
 
-// Setup UI events.
+// Expose populateNamesList globally so UI toggles can call it.
+window.populateNamesList = populateNamesList;
+
+// ----------------------------------------------------------------------
+// UI and Data Initialization
+// ----------------------------------------------------------------------
 setupUI(updateMapForFilters, populateNamesList);
 
-// Function to display front-end error messages.
 function displayError(message) {
   const existingError = document.getElementById("apiError");
   if (existingError) {
@@ -238,11 +243,9 @@ function displayError(message) {
   }
 }
 
-// Load API data with error handling.
 async function initializeData() {
   try {
     missingData = await loadDataFromAPI();
-    // Sort data by date_missing (oldest first) for playback.
     missingData.sort((a, b) => Date.parse(a.date_missing) - Date.parse(b.date_missing));
     let minDate = Infinity;
     let maxDate = -Infinity;
@@ -266,39 +269,33 @@ async function initializeData() {
 }
 initializeData();
 
-// --- Append Expand Map Button to the Zoom Control ---
+// ----------------------------------------------------------------------
+// Additional Map Controls
+// ----------------------------------------------------------------------
 (function addExpandButtonToZoomControl() {
-  // Wait for the zoom control to be added by Leaflet.
   setTimeout(() => {
     const zoomControl = document.querySelector('.leaflet-control-zoom.leaflet-bar');
     if (zoomControl) {
-      // Remove any previous instance of the expand button.
       const oldBtn = zoomControl.querySelector('#expandMapButton');
       if (oldBtn) oldBtn.remove();
 
-      // Create the new expand button element.
       const expandButton = document.createElement('a');
       expandButton.id = 'expandMapButton';
       expandButton.href = "#";
-      
-      // Get the width of an existing zoom button.
       const zoomBtnWidth = zoomControl.firstElementChild ? zoomControl.firstElementChild.offsetWidth : 30;
       expandButton.style.display = 'block';
       expandButton.style.width = zoomBtnWidth + 'px';
       expandButton.style.height = '30px';
       expandButton.style.lineHeight = '30px';
       expandButton.style.textAlign = 'center';
-      // Use the provided icon.
       expandButton.style.backgroundImage = 'url("https://icons.veryicon.com/png/o/miscellaneous/gis-map-toolbar/expand-25.png")';
       expandButton.style.backgroundSize = '20px 20px';
       expandButton.style.backgroundRepeat = 'no-repeat';
       expandButton.style.backgroundPosition = 'center';
-      // Set a white semi-transparent background and border.
       expandButton.style.backgroundColor = 'rgba(255,255,255,0.8)';
       expandButton.style.border = '1px solid #ccc';
       expandButton.style.cursor = 'pointer';
       
-      // Append the expand button as the last child of the zoom control.
       zoomControl.appendChild(expandButton);
       
       let mapExpanded = false;
@@ -320,7 +317,6 @@ initializeData();
   }, 500);
 })();
 
-// Toggle layer and playback event listeners.
 document.getElementById("satelliteToggleButton").addEventListener("click", function() {
   satelliteMode = !satelliteMode;
   if (satelliteMode) {
@@ -440,3 +436,5 @@ document.getElementById("stopButton").addEventListener("click", function() {
 
 // Refresh API data every 5 minutes.
 setInterval(initializeData, 300000);
+
+console.log("App initialized.");
