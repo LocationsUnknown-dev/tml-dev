@@ -75,13 +75,30 @@ export function buildPopupContent(item) {
 }
 
 function showDetailView(item) {
+  // Build the detailed popup content using your helper function.
   const popupContent = buildPopupContent(item);
-  const infoDiv = document.getElementById("info");
-  infoDiv.innerHTML = `<button id="backButton" style="margin-bottom: 10px;">Back to List</button><h3 style="margin-bottom: 15px;">Data Point Details</h3>${popupContent}`;
+
+  // Update only the infoContent section so that the header remains intact.
+  const infoContentDiv = document.getElementById("infoContent");
+  infoContentDiv.innerHTML = `
+    <button id="backButton" style="margin-bottom: 10px;">Back to List</button>
+    <h3 style="margin-bottom: 15px;">Data Point Details</h3>
+    ${popupContent}
+  `;
+
+  // Attach event listener to the Back button.
   document.getElementById("backButton").addEventListener("click", () => {
-    window.populateNamesList();
+    // Reset the map view to the default center and zoom level.
     map.setView([39.8283, -98.5795], 4);
+    // Re-render the default Case List.
+    if (typeof renderCaseList === "function") {
+      renderCaseList();
+    } else if (typeof window.populateNamesList === "function") {
+      window.populateNamesList();
+    }
   });
+
+  // Zoom in on the selected data point.
   const lat = parseFloat(item.latitude);
   const lng = parseFloat(item.longitude);
   if (!isNaN(lat) && !isNaN(lng)) {
