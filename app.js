@@ -89,18 +89,17 @@ function showDetailView(item) {
   }
 }
 
-// This function renders the case list into the content area only.
-// It no longer replaces the entire Info panel so that the header remains intact.
+// Updated populateNamesList now only updates the infoContent area.
 function populateNamesList() {
   const infoContent = document.getElementById("infoContent");
   infoContent.innerHTML = `
     <div id="namesSearch" style="margin-bottom: 10px;">
-      <input type="text" id="nameSearch" placeholder="Search names..." style="width: 100%; padding: 5px; margin-bottom: 5px;" value="${currentNameSearch}" />
+      <input type="text" id="nameSearch" placeholder="Search names..." style="width: 100%; padding: 5px; margin-bottom: 5px;" value="" />
       <select id="sortOption" style="width: 100%; padding: 5px;">
-        <option value="az" ${currentSortOption === "az" ? "selected" : ""}>A to Z</option>
-        <option value="za" ${currentSortOption === "za" ? "selected" : ""}>Z to A</option>
-        <option value="recently_added" ${currentSortOption === "recently_added" ? "selected" : ""}>Recently Added</option>
-        <option value="recently_updated" ${currentSortOption === "recently_updated" ? "selected" : ""}>Recently Updated</option>
+        <option value="az">A to Z</option>
+        <option value="za">Z to A</option>
+        <option value="recently_added">Recently Added</option>
+        <option value="recently_updated">Recently Updated</option>
       </select>
     </div>
     <div id="namesList"></div>
@@ -208,9 +207,50 @@ window.map = map; // Expose globally
 window.populateNamesList = populateNamesList;
 
 // ----------------------------------------------------------------------
+// Preload NP Boundaries (for Location List)
+// ----------------------------------------------------------------------
+async function loadNPBoundariesData() {
+  try {
+    const response = await fetch("https://themissinglist.com/data/US_National_Parks.geojson");
+    const data = await response.json();
+    window.nationalParksData = data;
+  } catch (error) {
+    console.error("Error loading NP boundaries data:", error);
+  }
+}
+
+// ----------------------------------------------------------------------
 // UI and Data Initialization
 // ----------------------------------------------------------------------
 setupUI(updateMapForFilters, populateNamesList);
+
+async function initializeData() {
+  try {
+    // Preload NP boundaries data
+    await loadNPBoundariesData();
+    
+    missingData = await loadDataFromAPI();
+    missingData.sort((a, b) => Date.parse(a.date_missing) - Date.parse(b.date_missing));
+    let minDate = Infinity;
+    let maxDate = -Infinity;
+    missingData.forEach(item => {
+      let d = Date.parse(item.date_missing) || 0;
+      if (d < minDate) minDate = d;
+      if (d > maxDate) maxDate = d;
+    });
+    window.globalMaxDate = maxDate;
+    const dateSlider = document.getElementById("dateSlider");
+    dateSlider.min = minDate;
+    dateSlider.max = maxDate;
+    dateSlider.value = maxDate;
+    document.getElementById("dateValue").textContent = new Date(maxDate).toLocaleDateString();
+    updateMapForFilters();
+    populateNamesList();
+  } catch (error) {
+    console.error("Error loading data:", error);
+    displayError("There was an error loading the map data. Please refresh the page and try again.");
+  }
+}
 
 function displayError(message) {
   const existingError = document.getElementById("apiError");
@@ -243,30 +283,6 @@ function displayError(message) {
   }
 }
 
-async function initializeData() {
-  try {
-    missingData = await loadDataFromAPI();
-    missingData.sort((a, b) => Date.parse(a.date_missing) - Date.parse(b.date_missing));
-    let minDate = Infinity;
-    let maxDate = -Infinity;
-    missingData.forEach(item => {
-      let d = Date.parse(item.date_missing) || 0;
-      if (d < minDate) minDate = d;
-      if (d > maxDate) maxDate = d;
-    });
-    window.globalMaxDate = maxDate;
-    const dateSlider = document.getElementById("dateSlider");
-    dateSlider.min = minDate;
-    dateSlider.max = maxDate;
-    dateSlider.value = maxDate;
-    document.getElementById("dateValue").textContent = new Date(maxDate).toLocaleDateString();
-    updateMapForFilters();
-    populateNamesList();
-  } catch (error) {
-    console.error("Error loading data:", error);
-    displayError("There was an error loading the map data. Please refresh the page and try again.");
-  }
-}
 initializeData();
 
 // ----------------------------------------------------------------------
