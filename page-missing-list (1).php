@@ -2,117 +2,88 @@
 /**
  * Template Name: Missing List Map
  */
+
 get_header();
 ?>
+
 <style>
-  html, body {
-    height: 100%;
-    margin: 0;
-  }
-  /* Main content grid: Filter (1fr), Map (2fr x2), Info (1fr) */
-  #content {
-    display: grid;
-    grid-template-columns: 1fr 2fr 2fr 1fr;
-    gap: 10px;
-    height: calc(100vh - 120px);
-  }
-  /* FILTER PANEL STYLING */
-  #filter {
-    grid-column: 1 / 2;
-    background: #f7f7f7;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    font-family: Arial, sans-serif;
-  }
-  #filter h3 {
-    font-size: 18px;
-    margin-bottom: 10px;
-    color: #333;
-  }
-  #filter label {
-    font-size: 14px;
-    color: #555;
-    display: block;
-    margin-bottom: 5px;
-  }
-  #filter input[type="range"],
-  #filter input[type="text"],
-  #filter select {
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    box-sizing: border-box;
-    font-size: 14px;
-  }
-  #filter button {
-    background: #0073aa;
-    color: #fff;
-    border: none;
-    padding: 8px 12px;
-    margin-top: 5px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 14px;
-  }
-  #filter button:hover {
-    background: #005177;
-  }
-  
-  /* MAP CONTAINER STYLING */
-  #map {
-    grid-column: 2 / span 2;
-    height: 100%;
-    position: relative;
-  }
-  
-  /* INFO PANEL STYLING */
-  #info {
-    grid-column: 4 / 5;
-    background: #fff;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    font-family: Arial, sans-serif;
-    overflow-y: auto;
-  }
-  
-  /* Expanded layout: Hide filter and info panels, map spans full width */
-  #content.expanded #filter,
-  #content.expanded #info {
-    display: none;
-  }
-  #content.expanded #map {
-    grid-column: 1 / -1;
-  }
-  
-  /* Existing Zoom Control Buttons (Leaflet) */
-  #terrainToggleButton,
-  #satelliteToggleButton,
-  #npBoundariesToggleButton,
-  #statesToggleButton,
-  #heatMapToggleButton {
-    position: absolute;
-    right: 10px;
-    background: rgba(255,255,255,0.9);
-    padding: 5px 10px;
-    border: 1px solid #ccc;
-    cursor: pointer;
-    z-index: 1000;
-    min-width: 70px;
-    text-align: center;
-    font-family: Arial, sans-serif;
-    font-size: 13px;
-  }
-  #terrainToggleButton { top: 10px; }
-  #satelliteToggleButton { top: 10px; right: 90px; }
-  #npBoundariesToggleButton { top: 50px; }
-  #statesToggleButton { top: 90px; }
-  #heatMapToggleButton { top: 130px; }
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+/* Main content grid: Filter (1fr), Map (2fr x2), Info (1fr) */
+#content {
+  display: grid;
+  grid-template-columns: 1fr 2fr 2fr 1fr;
+  gap: 10px;
+  height: calc(100vh - 120px);
+}
+
+/* FILTER PANEL STYLING */
+#filter {
+  grid-column: 1 / 2;
+  background: #f7f7f7;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-family: Arial, sans-serif;
+}
+#filter h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #333;
+}
+#filter label {
+  font-size: 14px;
+  color: #555;
+  display: block;
+  margin-bottom: 5px;
+}
+#filter input[type="range"],
+#filter input[type="text"],
+#filter select {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+#filter button {
+  background: #0073aa;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  margin-top: 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+}
+#filter button:hover {
+  background: #005177;
+}
+
+/* MAP CONTAINER STYLING */
+#map {
+  grid-column: 2 / span 2;
+  height: 100%;
+  position: relative;
+}
+
+/* INFO PANEL STYLING */
+#info {
+  grid-column: 4 / 5;
+  background: #fff;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-family: Arial, sans-serif;
+  overflow-y: auto;
+}
 </style>
 
 <div id="content">
@@ -147,22 +118,39 @@ get_header();
       <p id="caseCount">Cases Selected: <span id="caseTotal">0</span></p>
     </div>
   </div>
-  
+
   <!-- Map Container -->
   <div id="map">
-    <div id="terrainToggleButton">Terrain</div>
-    <div id="satelliteToggleButton">Satellite</div>
-    <div id="npBoundariesToggleButton">NP Boundaries</div>
-    <div id="statesToggleButton">States</div>
-    <div id="heatMapToggleButton">Heat Map</div>
+    <div id="terrainToggleButton" style="position:absolute; top:10px; right:10px;">Terrain</div>
+    <div id="satelliteToggleButton" style="position:absolute; top:10px; right:90px;">Satellite</div>
+    <div id="npBoundariesToggleButton" style="position:absolute; top:50px; right:10px;">NP Boundaries</div>
+    <div id="statesToggleButton" style="position:absolute; top:90px; right:10px;">States</div>
+    <div id="heatMapToggleButton" style="position:absolute; top:130px; right:10px;">Heat Map</div>
     <!-- The Expand Map button will be appended by JavaScript into the zoom control -->
   </div>
-  
+
   <!-- Info Panel -->
   <div id="info">
-    <!-- Case list and detail view will be injected here by JavaScript -->
+    <div id="infoHeader" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <h2>Case List</h2>
+      <div>
+        <button id="switchToLocations" style="display:inline-block;">Switch to Locations</button>
+        <button id="switchToCases" style="display:none;">Switch to Cases</button>
+      </div>
+    </div>
+    <div id="locationControls" style="display:none; margin-bottom: 10px;">
+      <input type="text" id="locationSearch" placeholder="Search locations" style="width:70%; padding:5px;" />
+      <select id="locationSort" style="padding:5px;">
+        <option value="az">A to Z</option>
+        <option value="za">Z to A</option>
+        <option value="largest">Largest to Smallest</option>
+        <option value="smallest">Smallest to Largest</option>
+      </select>
+    </div>
+    <div id="infoContent">
+      <!-- Case list or location list content will be injected here -->
+    </div>
   </div>
 </div>
-<?php
-get_footer();
-?>
+
+<?php get_footer(); ?>
