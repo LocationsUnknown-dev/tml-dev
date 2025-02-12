@@ -147,7 +147,7 @@ html, body {
     </select>
   </div>
   <div id="infoContent">
-    <!-- This area will be updated with the case list or location list -->
+    <!-- List content is injected here -->
   </div>
 </div>
 
