@@ -1,4 +1,7 @@
 // assets/js/boundaries.js
+
+import { trailsConfig, addParkTrailsToggleButton, removeParkTrailsToggleButton } from './trails.js';
+
 export function toggleNPBoundaries(map, npRef, button) {
   if (npRef.layer && map.hasLayer(npRef.layer)) {
     map.removeLayer(npRef.layer);
@@ -17,12 +20,33 @@ export function toggleNPBoundaries(map, npRef, button) {
             onEachFeature: function(feature, layer) {
               if (feature.properties && feature.properties.unit_name) {
                 layer.bindPopup("<strong>" + feature.properties.unit_name + "</strong>");
+                layer.on('click', function(e) {
+                  // Convert the park's name to lowercase for matching.
+                  const parkNameLower = feature.properties.unit_name.toLowerCase();
+                  let matchedKey = null;
+                  // Loop through trailsConfig keys and check if the park name includes the key.
+                  for (const key in trailsConfig) {
+                    if (parkNameLower.includes(key)) {
+                      matchedKey = key;
+                      break;
+                    }
+                  }
+                  if (matchedKey) {
+                    // When a park with trails is clicked, show its toggle button.
+                    addParkTrailsToggleButton(e.target._map, matchedKey);
+                  } else {
+                    // Remove any existing trails toggle buttons and overlays.
+                    Object.keys(trailsConfig).forEach(key => {
+                      removeParkTrailsToggleButton(e.target._map, key);
+                    });
+                  }
+                });
               }
             }
           });
           map.addLayer(layer);
           npRef.layer = layer;
-          npRef.nationalParksData = geojsonData; // Save for park filtering.
+          npRef.nationalParksData = geojsonData;
           button.innerHTML = "Remove NP Boundaries";
         })
         .catch(error => console.error("Error loading NP Boundaries GeoJSON:", error));
