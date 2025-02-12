@@ -77,19 +77,31 @@ export function buildPopupContent(item) {
 function showDetailView(item) {
   const popupContent = buildPopupContent(item);
   const infoDiv = document.getElementById("info");
-  infoDiv.innerHTML = `<button id="backButton" style="margin-bottom: 10px;">Back to List</button><h3 style="margin-bottom: 15px;">Data Point Details</h3>${popupContent}`;
+  infoDiv.innerHTML = `
+    <button id="backButton" style="margin-bottom: 10px;">Back to List</button>
+    <h3 style="margin-bottom: 15px;">Data Point Details</h3>
+    ${popupContent}
+  `;
   document.getElementById("backButton").addEventListener("click", () => {
-    window.populateNamesList();
-    map.setView([39.8283, -98.5795], 4);
+    const headerText = document.querySelector("#infoHeader h2").textContent;
+    if (headerText === "Case List") {
+      if (typeof window.populateNamesList === "function") {
+        window.populateNamesList();
+      }
+    } else if (headerText === "Location List") {
+      if (typeof window.renderLocationList === "function") {
+        window.renderLocationList();
+      }
+    }
+    window.map.setView([39.8283, -98.5795], 4);
   });
   const lat = parseFloat(item.latitude);
   const lng = parseFloat(item.longitude);
   if (!isNaN(lat) && !isNaN(lng)) {
-    map.setView([lat, lng], 10);
+    window.map.setView([lat, lng], 10);
   }
 }
 
-// Updated populateNamesList now only updates the infoContent area.
 function populateNamesList() {
   const infoContent = document.getElementById("infoContent");
   infoContent.innerHTML = `
@@ -141,7 +153,7 @@ function updateNamesList() {
       const lat = parseFloat(link.getAttribute("data-lat"));
       const lng = parseFloat(link.getAttribute("data-lng"));
       if (!isNaN(lat) && !isNaN(lng)) {
-        map.setView([lat, lng], 10);
+        window.map.setView([lat, lng], 10);
       }
       showDetailView(item);
     });
@@ -178,9 +190,9 @@ function filterData() {
 function updateMapForFilters() {
   const filtered = filterData();
   if (heatMapMode) {
-    updateHeatLayer(map, filtered);
+    updateHeatLayer(window.map, filtered);
   } else {
-    addMarkers(map, filtered, buildPopupContent, showDetailView, markerCluster);
+    addMarkers(window.map, filtered, buildPopupContent, showDetailView, markerCluster);
   }
   document.getElementById("caseTotal").textContent = filtered.length;
   
@@ -192,7 +204,7 @@ function updateMapForFilters() {
     );
     if (matchingFeature) {
       const tempLayer = L.geoJSON(matchingFeature);
-      map.fitBounds(tempLayer.getBounds());
+      window.map.fitBounds(tempLayer.getBounds());
     }
   }
 }
@@ -200,33 +212,23 @@ function updateMapForFilters() {
 // ----------------------------------------------------------------------
 // Map Initialization and Global Setup
 // ----------------------------------------------------------------------
+import { initMap } from './map.js';
 const { map, defaultTileLayer, terrainTileLayer, satelliteTileLayer, markerCluster } = initMap();
 window.map = map; // Expose globally
 
-// Expose populateNamesList globally so UI toggles can call it.
+// Expose populateNamesList and renderLocationList globally so UI toggles can call them.
 window.populateNamesList = populateNamesList;
-
-// ----------------------------------------------------------------------
-// Preload NP Boundaries (for Location List)
-// ----------------------------------------------------------------------
-async function loadNPBoundariesData() {
-  try {
-    const response = await fetch("https://themissinglist.com/data/US_National_Parks.geojson");
-    const data = await response.json();
-    window.nationalParksData = data;
-  } catch (error) {
-    console.error("Error loading NP boundaries data:", error);
-  }
-}
+window.renderLocationList = renderLocationList;
 
 // ----------------------------------------------------------------------
 // UI and Data Initialization
 // ----------------------------------------------------------------------
+import { setupUI } from './ui.js';
 setupUI(updateMapForFilters, populateNamesList);
 
 async function initializeData() {
   try {
-    // Preload NP boundaries data
+    // Preload NP boundaries data.
     await loadNPBoundariesData();
     
     missingData = await loadDataFromAPI();
@@ -327,7 +329,7 @@ initializeData();
           expandButton.style.transform = "rotate(0deg)";
           mapExpanded = false;
         }
-        setTimeout(() => { map.invalidateSize(); }, 200);
+        setTimeout(() => { window.map.invalidateSize(); }, 200);
       });
     }
   }, 500);
@@ -336,74 +338,74 @@ initializeData();
 document.getElementById("satelliteToggleButton").addEventListener("click", function() {
   satelliteMode = !satelliteMode;
   if (satelliteMode) {
-    if (map.hasLayer(defaultTileLayer)) map.removeLayer(defaultTileLayer);
-    if (map.hasLayer(terrainTileLayer)) map.removeLayer(terrainTileLayer);
-    map.addLayer(satelliteTileLayer);
+    if (window.map.hasLayer(defaultTileLayer)) window.map.removeLayer(defaultTileLayer);
+    if (window.map.hasLayer(terrainTileLayer)) window.map.removeLayer(terrainTileLayer);
+    window.map.addLayer(satelliteTileLayer);
     this.innerHTML = "Default";
     terrainMode = false;
     document.getElementById("terrainToggleButton").innerHTML = "Terrain";
     statesMode = false;
     document.getElementById("statesToggleButton").innerHTML = "States";
     if (heatMapMode) {
-      removeHeatLayer(map);
+      removeHeatLayer(window.map);
       heatMapMode = false;
       document.getElementById("heatMapToggleButton").innerHTML = "Heat Map";
-      map.addLayer(markerCluster);
+      window.map.addLayer(markerCluster);
     }
   } else {
-    if (map.hasLayer(satelliteTileLayer)) map.removeLayer(satelliteTileLayer);
-    map.addLayer(defaultTileLayer);
+    if (window.map.hasLayer(satelliteTileLayer)) window.map.removeLayer(satelliteTileLayer);
+    window.map.addLayer(defaultTileLayer);
     this.innerHTML = "Satellite";
   }
-  setTimeout(() => { map.invalidateSize(); }, 200);
+  setTimeout(() => { window.map.invalidateSize(); }, 200);
 });
 
 document.getElementById("terrainToggleButton").addEventListener("click", function() {
   terrainMode = !terrainMode;
   if (terrainMode) {
-    if (map.hasLayer(defaultTileLayer)) map.removeLayer(defaultTileLayer);
-    if (map.hasLayer(satelliteTileLayer)) map.removeLayer(satelliteTileLayer);
-    map.addLayer(terrainTileLayer);
+    if (window.map.hasLayer(defaultTileLayer)) window.map.removeLayer(defaultTileLayer);
+    if (window.map.hasLayer(satelliteTileLayer)) window.map.removeLayer(satelliteTileLayer);
+    window.map.addLayer(terrainTileLayer);
     this.innerHTML = "Default";
     satelliteMode = false;
     document.getElementById("satelliteToggleButton").innerHTML = "Satellite";
     statesMode = false;
     document.getElementById("statesToggleButton").innerHTML = "States";
     if (heatMapMode) {
-      removeHeatLayer(map);
+      removeHeatLayer(window.map);
       heatMapMode = false;
       document.getElementById("heatMapToggleButton").innerHTML = "Heat Map";
-      map.addLayer(markerCluster);
+      window.map.addLayer(markerCluster);
     }
   } else {
-    if (map.hasLayer(terrainTileLayer)) map.removeLayer(terrainTileLayer);
-    map.addLayer(defaultTileLayer);
+    if (window.map.hasLayer(terrainTileLayer)) window.map.removeLayer(terrainTileLayer);
+    window.map.addLayer(defaultTileLayer);
     this.innerHTML = "Terrain";
   }
-  setTimeout(() => { map.invalidateSize(); }, 200);
+  setTimeout(() => { window.map.invalidateSize(); }, 200);
 });
 
 document.getElementById("npBoundariesToggleButton").addEventListener("click", function() {
-  toggleNPBoundaries(map, npBoundariesRef, this);
+  toggleNPBoundaries(window.map, npBoundariesRef, this);
 });
 
 document.getElementById("statesToggleButton").addEventListener("click", function() {
-  toggleStates(map, stateLayerRef, this, missingData, addMarkers, buildPopupContent, showDetailView);
-  setTimeout(() => { map.invalidateSize(); }, 200);
+  toggleStates(window.map, stateLayerRef, this, missingData, addMarkers, buildPopupContent, showDetailView);
+  setTimeout(() => { window.map.invalidateSize(); }, 200);
 });
 
 document.getElementById("heatMapToggleButton").addEventListener("click", function() {
   heatMapMode = !heatMapMode;
   if (heatMapMode) {
-    if (map.hasLayer(markerCluster)) map.removeLayer(markerCluster);
-    updateHeatLayer(map, missingData);
+    if (window.map.hasLayer(markerCluster)) window.map.removeLayer(markerCluster);
+    updateHeatLayer(window.map, missingData);
     this.innerHTML = "Remove Heat Map";
   } else {
-    removeHeatLayer(map);
-    map.addLayer(markerCluster);
+    removeHeatLayer(window.map);
+    window.map.addLayer(markerCluster);
     this.innerHTML = "Heat Map";
   }
-  setTimeout(() => { map.invalidateSize(); }, 200);
+  setTimeout(() => { window.map.invalidateSize(); }, 200);
 });
 
 // Playback controls.
