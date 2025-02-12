@@ -1,7 +1,6 @@
 // assets/js/ui.js
 
 export function setupUI(updateMapForFilters, populateCaseList) {
-  // (Assuming other filter-related UI setup is handled elsewhere)
   setupInfoPanelToggle();
 }
 
@@ -17,9 +16,11 @@ function setupInfoPanelToggle() {
     // Toggle button visibility
     switchToLocationsBtn.style.display = "none";
     switchToCasesBtn.style.display = "inline-block";
-    // Show location-specific controls (search, sort)
+    // Show location-specific controls
     locationControls.style.display = "block";
-    // Render the location list into the content area only
+    // Clear the content area and render the Location List
+    const infoContent = document.getElementById("infoContent");
+    infoContent.innerHTML = "";
     renderLocationList();
   });
 
@@ -29,20 +30,48 @@ function setupInfoPanelToggle() {
     switchToCasesBtn.style.display = "none";
     switchToLocationsBtn.style.display = "inline-block";
     locationControls.style.display = "none";
-    // Render the case list into the content area only
+    // Clear the content area and render the Case List
+    const infoContent = document.getElementById("infoContent");
+    infoContent.innerHTML = "";
     renderCaseList();
   });
 
-  // Setup event listeners for location search and sorting
+  // Setup event listeners for location search and sorting.
   document.getElementById("locationSearch").addEventListener("input", renderLocationList);
   document.getElementById("locationSort").addEventListener("change", renderLocationList);
 }
 
+/**
+ * Loads NP boundaries data (if not already loaded) into window.nationalParksData.
+ * This function fetches the data from your designated URL and, once loaded,
+ * calls renderLocationList() to update the list.
+ */
+function loadLocationData() {
+  if (window.nationalParksData && window.nationalParksData.features && window.nationalParksData.features.length > 0) {
+    return; // Data already loaded.
+  }
+  fetch("https://themissinglist.com/data/US_National_Parks.geojson")
+    .then(response => response.json())
+    .then(geojsonData => {
+      window.nationalParksData = geojsonData;
+      renderLocationList();
+    })
+    .catch(error => {
+      document.getElementById("infoContent").innerHTML = "<p>Error loading location data.</p>";
+      console.error("Error loading NP boundaries data:", error);
+    });
+}
+
 function renderLocationList() {
   const infoContent = document.getElementById("infoContent");
-  // Use the global NP boundaries data (set in boundaries.js)
-  if (!window.nationalParksData || !window.nationalParksData.features) {
-    infoContent.innerHTML = "<p>No location data available.</p>";
+  // Only render if the header is set to "Location List"
+  if (document.querySelector("#infoHeader h2").textContent !== "Location List") {
+    return;
+  }
+  // If data isn't loaded, display a loading message and load it.
+  if (!window.nationalParksData || !window.nationalParksData.features || window.nationalParksData.features.length === 0) {
+    infoContent.innerHTML = "<p>Location data is loading. Please wait...</p>";
+    loadLocationData();
     return;
   }
   let locations = window.nationalParksData.features.slice();
@@ -50,14 +79,14 @@ function renderLocationList() {
   const searchValue = document.getElementById("locationSearch").value.toLowerCase();
   const sortOption = document.getElementById("locationSort").value;
 
-  // Filter locations based on search input
+  // Filter locations based on search input.
   if (searchValue) {
     locations = locations.filter(feature =>
       feature.properties.unit_name.toLowerCase().includes(searchValue)
     );
   }
 
-  // Sort locations based on selected option
+  // Sort locations based on selected option.
   locations.sort((a, b) => {
     const nameA = a.properties.unit_name.toLowerCase();
     const nameB = b.properties.unit_name.toLowerCase();
@@ -73,11 +102,11 @@ function renderLocationList() {
     return 0;
   });
 
-  // Build HTML for the list
+  // Build the HTML for the location list.
   let html = "<ul class='location-list' style='list-style: none; padding: 0; margin: 0;'>";
   locations.forEach(feature => {
     const parkName = feature.properties.unit_name;
-    // Create a temporary layer to calculate bounds
+    // Create a temporary Leaflet layer to calculate bounds.
     const tempLayer = L.geoJSON(feature);
     const bounds = tempLayer.getBounds();
     html += `<li class="location-item" data-bounds='${JSON.stringify(bounds.toBBoxString())}' style="cursor: pointer; margin-bottom: 5px;">${parkName}</li>`;
@@ -85,7 +114,7 @@ function renderLocationList() {
   html += "</ul>";
   infoContent.innerHTML = html;
 
-  // Add click events to zoom into the selected location
+  // Add click events to zoom into the selected location.
   document.querySelectorAll(".location-item").forEach(item => {
     item.addEventListener("click", function() {
       const bbox = this.getAttribute("data-bounds").split(",").map(Number);
@@ -101,7 +130,7 @@ function renderLocationList() {
 
 function renderCaseList() {
   // Render the case list into the content area.
-  // This function assumes that window.populateNamesList is defined in app.js to update only #infoContent.
+  // This function calls window.populateNamesList (which should update only the content area).
   if (typeof window.populateNamesList === "function") {
     window.populateNamesList();
   } else {
