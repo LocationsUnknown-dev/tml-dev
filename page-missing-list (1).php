@@ -129,17 +129,12 @@ html, body {
     <!-- The Expand Map button will be appended by JavaScript into the zoom control -->
   </div>
 
-  <!-- Info Panel -->
   <div id="info">
   <div id="infoHeader" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
     <h2>Case List</h2>
     <div>
-      <button id="switchToLocations" style="display: block !important; background: #0073aa; color: #fff; border: none; padding: 5px 10px; cursor: pointer; margin-right: 5px;">
-        Switch to Locations
-      </button>
-      <button id="switchToCases" style="display: none !important; background: #0073aa; color: #fff; border: none; padding: 5px 10px; cursor: pointer;">
-        Switch to Cases
-      </button>
+      <button id="switchToLocations" style="display: inline-block;">Switch to Locations</button>
+      <button id="switchToCases" style="display: none;">Switch to Cases</button>
     </div>
   </div>
   <div id="locationControls" style="display: none; margin-bottom: 10px;">
@@ -152,7 +147,7 @@ html, body {
     </select>
   </div>
   <div id="infoContent">
-    <!-- Case list or location list content will be injected here -->
+    <!-- This area will be updated with the case list or location list -->
   </div>
 </div>
 
