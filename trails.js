@@ -11,6 +11,33 @@ export const trailsConfig = {
   // Add more parks as needed...
 };
 
+// Cache for fetched trails data.
+const parkTrailsDataCache = {};
+
+// Helper: Fetch and cache trails data for a park.
+export function fetchTrailsData(parkKey) {
+  if (parkTrailsDataCache[parkKey]) {
+    return Promise.resolve(parkTrailsDataCache[parkKey]);
+  }
+  const config = trailsConfig[parkKey];
+  if (!config) {
+    return Promise.reject(`No trails configuration for park: ${parkKey}`);
+  }
+  return fetch(config.url)
+    .then(response => response.arrayBuffer())
+    .then(arrayBuffer => {
+      // Use pako to decompress the gzipped data.
+      const decompressed = window.pako.ungzip(new Uint8Array(arrayBuffer), { to: 'string' });
+      const geojsonData = JSON.parse(decompressed);
+      parkTrailsDataCache[parkKey] = geojsonData;
+      return geojsonData;
+    })
+    .catch(error => {
+      console.error(`Error loading trails for ${parkKey}:`, error);
+      throw error;
+    });
+}  // <-- This closing curly bracket was missing!
+
 // Internal storage for loaded layers.
 const parkTrailsLayers = {};
 
