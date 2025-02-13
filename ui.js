@@ -1,6 +1,6 @@
 // assets/js/ui.js
 
-// Import trails configuration, data fetching, and overlay removal functions.
+// Import trails configuration and data fetching functions.
 import { trailsConfig, fetchTrailsData, removeParkTrailsToggleButton } from './trails.js';
 
 // -----------------------------
@@ -52,6 +52,7 @@ let selectedTrailLayer = null;
 /**
  * Displays a single trail feature on the map.
  * Removes any previously added single trail layer and removes the general trails overlay.
+ * Zooms the map to the bounds of the selected trail.
  * @param {Object} trailFeature - A GeoJSON feature for the trail.
  * @param {string} parkKey - The key for the park (if available).
  */
@@ -60,7 +61,7 @@ function showSingleTrail(trailFeature, parkKey) {
   if (selectedTrailLayer && window.map.hasLayer(selectedTrailLayer)) {
     window.map.removeLayer(selectedTrailLayer);
   }
-  // Remove any general trails overlay if present.
+  // Remove general trails overlay if present.
   if (parkKey) {
     removeParkTrailsToggleButton(window.map, parkKey);
   }
@@ -79,6 +80,11 @@ function showSingleTrail(trailFeature, parkKey) {
     }
   });
   window.map.addLayer(selectedTrailLayer);
+  // Zoom to the bounds of the selected trail.
+  const trailBounds = getFeatureBounds(trailFeature);
+  if (trailBounds.isValid()) {
+    window.map.fitBounds(trailBounds);
+  }
 }
 
 /**
@@ -100,7 +106,7 @@ function updateTrailsList(trails, parkKey) {
     }
   });
   
-  // Apply filtering: only include features that have at least one of the selected property keys with a non-empty value.
+  // Apply filtering: include only features that have at least one selected property.
   let filteredTrails = trails;
   if (selectedFilters.length > 0) {
     filteredTrails = trails.filter(feature => {
