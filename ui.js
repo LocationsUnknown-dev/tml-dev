@@ -1,7 +1,7 @@
 // assets/js/ui.js
 
-// Import trails configuration and data fetching functions.
-import { trailsConfig, fetchTrailsData } from './trails.js';
+// Import trails configuration, data fetching, and overlay removal functions.
+import { trailsConfig, fetchTrailsData, removeParkTrailsToggleButton } from './trails.js';
 
 // -----------------------------
 // Spatial Filtering Helpers
@@ -43,14 +43,76 @@ function getParkKeyFromUnitName(unitName) {
   return null;
 }
 
+// -----------------------------
+// Trails List Global State
+// -----------------------------
+let currentSortedTrails = [];
+let selectedTrailLayer = null;
+
 /**
- * Updates the trails list in the detail view based on the provided trails array
- * and the current sort selection.
- * @param {Array} trails - Array of GeoJSON features representing trails.
+ * Displays a single trail feature on the map.
+ * Removes any previously added single trail layer and removes the general trails overlay.
+ * @param {Object} trailFeature - A GeoJSON feature for the trail.
+ * @param {string} parkKey - The key for the park (if available).
  */
-function updateTrailsList(trails) {
+function showSingleTrail(trailFeature, parkKey) {
+  // Remove any existing single trail layer.
+  if (selectedTrailLayer && window.map.hasLayer(selectedTrailLayer)) {
+    window.map.removeLayer(selectedTrailLayer);
+  }
+  // Remove any general trails overlay if present.
+  if (parkKey) {
+    removeParkTrailsToggleButton(window.map, parkKey);
+  }
+  selectedTrailLayer = L.geoJSON(trailFeature, {
+    style: { color: "#FF5733", weight: 3 },
+    onEachFeature: function(feature, layer) {
+      if (feature.properties) {
+        let popupContent = "";
+        Object.keys(feature.properties).forEach(key => {
+          if (key !== '@id' && feature.properties[key] != null && feature.properties[key].toString().trim() !== "") {
+            popupContent += `<strong>${key}:</strong> ${feature.properties[key]}<br>`;
+          }
+        });
+        layer.bindPopup(popupContent);
+      }
+    }
+  });
+  window.map.addLayer(selectedTrailLayer);
+}
+
+/**
+ * Updates the trails list in the detail view.
+ * Applies sorting and additional filtering based on the sort dropdown and filter checkboxes.
+ * @param {Array} trails - Array of matching GeoJSON trail features.
+ * @param {string} parkKey - The park key for which trails are being processed.
+ */
+function updateTrailsList(trails, parkKey) {
+  // Get the sort option.
   const sortValue = document.getElementById("trailsSort").value;
-  let sortedTrails = [...trails]; // shallow copy
+  
+  // Get selected filter checkboxes.
+  const filterCheckboxes = document.querySelectorAll(".trailsFilterCheckbox");
+  const selectedFilters = [];
+  filterCheckboxes.forEach(cb => {
+    if (cb.checked) {
+      selectedFilters.push(cb.value);
+    }
+  });
+  
+  // Apply filtering: only include features that have at least one of the selected property keys with a non-empty value.
+  let filteredTrails = trails;
+  if (selectedFilters.length > 0) {
+    filteredTrails = trails.filter(feature => {
+      return selectedFilters.some(prop => {
+        const val = feature.properties[prop];
+        return val != null && val.toString().trim() !== "";
+      });
+    });
+  }
+  
+  // Apply sorting.
+  let sortedTrails = [...filteredTrails]; // shallow copy
   if (sortValue === "name-asc") {
     sortedTrails.sort((a, b) => (a.properties.name || "").localeCompare(b.properties.name || ""));
   } else if (sortValue === "name-desc") {
@@ -60,19 +122,36 @@ function updateTrailsList(trails) {
   } else if (sortValue === "length-desc") {
     sortedTrails.sort((a, b) => parseFloat(b.properties.length || 0) - parseFloat(a.properties.length || 0));
   }
+  
+  // Update global variable.
+  currentSortedTrails = sortedTrails;
+  
+  // Build the HTML list.
   const trailsListEl = document.getElementById("trailsDataList");
   trailsListEl.innerHTML = sortedTrails
-    .map(feature => {
+    .map((feature, index) => {
       const name = feature.properties.name || "Unnamed Trail";
-      // Optionally show additional details (e.g., length).
       const length = feature.properties.length ? ` (Length: ${feature.properties.length})` : "";
-      return `<li>${name}${length}</li>`;
+      const route = feature.properties.route ? ` Route: ${feature.properties.route}` : "";
+      const type = feature.properties.type ? ` Type: ${feature.properties.type}` : "";
+      const natural = feature.properties.natural ? ` Natural: ${feature.properties.natural}` : "";
+      const amenity = feature.properties.amenity ? ` Amenity: ${feature.properties.amenity}` : "";
+      const tourism = feature.properties.tourism ? ` Tourism: ${feature.properties.tourism}` : "";
+      return `<li data-index="${index}" style="cursor:pointer;">${name}${length}${route}${type}${natural}${amenity}${tourism}</li>`;
     })
     .join("");
+  
+  // Attach click events to each trail list item.
+  document.querySelectorAll("#trailsDataList li").forEach(li => {
+    li.addEventListener("click", function() {
+      const index = parseInt(this.getAttribute("data-index"), 10);
+      showSingleTrail(currentSortedTrails[index], parkKey);
+    });
+  });
 }
 
 // -----------------------------
-// UI Setup Functions
+// UI Setup Functions (Locations & Cases)
 // -----------------------------
 
 /**
@@ -211,12 +290,9 @@ async function renderLocationList() {
   });
   listHTML += "</ul>";
   listContainer.innerHTML = listHTML;
-
-  // Attach click events to location links.
   document.querySelectorAll(".locationLink").forEach(link => {
     link.addEventListener("click", function (e) {
       e.preventDefault();
-      // Toggle NP Boundaries if not active.
       const npToggle = document.getElementById("npBoundariesToggleButton");
       if (npToggle && npToggle.innerHTML.trim() !== "Remove NP Boundaries") {
         npToggle.click();
@@ -238,11 +314,6 @@ async function renderLocationList() {
   });
 }
 
-/**
- * Displays the detailed view for a selected location,
- * including a list of trails data points with filtering options.
- * @param {Object} locationFeature - The selected location's GeoJSON feature.
- */
 function showLocationDetailView(locationFeature) {
   const infoContent = document.getElementById("infoContent");
   let html = `
@@ -255,7 +326,6 @@ function showLocationDetailView(locationFeature) {
   if (locationFeature.properties.description) {
     html += `<p>${locationFeature.properties.description}</p>`;
   }
-  // Trails Data Points section with a sort dropdown.
   html += `<div id="trailsList">
              <h4>Trails Data Points</h4>
              <label for="trailsSort">Sort By: </label>
@@ -265,20 +335,23 @@ function showLocationDetailView(locationFeature) {
                <option value="length-asc">Length (Low to High)</option>
                <option value="length-desc">Length (High to Low)</option>
              </select>
+             <div id="trailsFilters" style="margin-top: 5px;">
+               <label><input type="checkbox" class="trailsFilterCheckbox" value="route"> Route</label>
+               <label><input type="checkbox" class="trailsFilterCheckbox" value="type"> Type</label>
+               <label><input type="checkbox" class="trailsFilterCheckbox" value="natural"> Natural</label>
+               <label><input type="checkbox" class="trailsFilterCheckbox" value="amenity"> Amenity</label>
+               <label><input type="checkbox" class="trailsFilterCheckbox" value="tourism"> Tourism</label>
+             </div>
              <ul id="trailsDataList"></ul>
            </div>`;
   infoContent.innerHTML = html;
-
   document.getElementById("backToLocationList").addEventListener("click", () => {
     if (window.map) {
       window.map.setView([39.8283, -98.5795], 4);
     }
     renderLocationList();
   });
-
-  // Derive the park key from the location's unit name.
   const parkKey = getParkKeyFromUnitName(locationFeature.properties.unit_name);
-  
   if (parkKey && trailsConfig[parkKey]) {
     fetchTrailsData(parkKey)
       .then(geojsonData => {
@@ -296,13 +369,14 @@ function showLocationDetailView(locationFeature) {
           return boundsIntersect(featureBounds, locationBounds);
         });
         console.log("Matching trails:", matchingTrails);
-        // Store the matching trails in a variable for re-sorting.
-        let currentMatchingTrails = matchingTrails;
-        // Initially update the trails list.
-        updateTrailsList(currentMatchingTrails);
-        // Add event listener to the trailsSort dropdown.
+        updateTrailsList(matchingTrails, parkKey);
         document.getElementById("trailsSort").addEventListener("change", () => {
-          updateTrailsList(currentMatchingTrails);
+          updateTrailsList(matchingTrails, parkKey);
+        });
+        document.querySelectorAll(".trailsFilterCheckbox").forEach(cb => {
+          cb.addEventListener("change", () => {
+            updateTrailsList(matchingTrails, parkKey);
+          });
         });
       })
       .catch(error => {
@@ -312,8 +386,6 @@ function showLocationDetailView(locationFeature) {
   } else {
     document.getElementById("trailsDataList").innerHTML = "";
   }
-
-  // Optionally, zoom to the location's bounds.
   if (locationFeature && locationFeature.geometry) {
     const bounds = L.geoJSON(locationFeature).getBounds();
     if (bounds.isValid()) {
@@ -322,9 +394,6 @@ function showLocationDetailView(locationFeature) {
   }
 }
 
-/**
- * Renders the case list into the info panel.
- */
 function renderCaseList() {
   if (typeof window.populateNamesList === "function") {
     window.populateNamesList();
