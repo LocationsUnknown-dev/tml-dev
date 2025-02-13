@@ -1,4 +1,5 @@
 // assets/js/app.js
+
 import { loadDataFromAPI } from './api.js';
 import { initMap } from './map.js';
 import { addMarkers, updateHeatLayer, removeHeatLayer } from './markers.js';
@@ -38,46 +39,37 @@ const displayLabels = {
 
 export function buildPopupContent(item) {
   return `
-    <div class="detail-card" style="max-width: 400px; margin: 0 auto; font-family: Arial, sans-serif; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-      <div class="detail-header" style="text-align: center; margin-bottom: 15px;">
-        <img src="${item.profile_picture}" alt="Profile Picture" style="width: 100px; height: auto; border-radius: 50%; border: 2px solid #ccc;">
-      </div>
-      <dl style="margin: 0;">
-        <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Name:</dt>
-        <dd style="margin: 0 0 10px;">${item.name}</dd>
-        
-        <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Date Missing:</dt>
-        <dd style="margin: 0 0 10px;">${item.date_missing}</dd>
-        
-        <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Status:</dt>
-        <dd style="margin: 0 0 10px;">${item.status || "N/A"}</dd>
-        
-        <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Age:</dt>
-        <dd style="margin: 0 0 10px;">${item.age}</dd>
-        
-        <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Gender:</dt>
-        <dd style="margin: 0 0 10px;">${item.gender}</dd>
-        
-        <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Last Seen:</dt>
-        <dd style="margin: 0 0 10px; white-space: normal;">${item.last_seen}</dd>
-        
-        <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Summary:</dt>
-        <dd style="margin: 0 0 10px;">${item.summary}</dd>
-        
-        <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Park/Forest:</dt>
-        <dd style="margin: 0 0 10px;">${item.park}</dd>
-        
-        <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Case Link:</dt>
-        <dd style="margin: 0 0 10px;"><a href="${item.case_link}" target="_blank" style="color: #0073aa; text-decoration: none;">More Info</a></dd>
-      </dl>
-    </div>
-  `;
+<div class="detail-card" style="max-width: 400px; margin: 0 auto; font-family: Arial, sans-serif; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+  <div class="detail-header" style="text-align: center; margin-bottom: 15px;">
+    <img src="${item.profile_picture}" alt="Profile Picture" style="width: 100px; height: auto; border-radius: 50%; border: 2px solid #ccc;">
+  </div>
+  <dl style="margin: 0;">
+    <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Name:</dt>
+    <dd style="margin: 0 0 10px;">${item.name}</dd>
+    <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Date Missing:</dt>
+    <dd style="margin: 0 0 10px;">${item.date_missing}</dd>
+    <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Status:</dt>
+    <dd style="margin: 0 0 10px;">${item.status || "N/A"}</dd>
+    <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Age:</dt>
+    <dd style="margin: 0 0 10px;">${item.age}</dd>
+    <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Gender:</dt>
+    <dd style="margin: 0 0 10px;">${item.gender}</dd>
+    <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Last Seen:</dt>
+    <dd style="margin: 0 0 10px; white-space: normal;">${item.last_seen}</dd>
+    <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Summary:</dt>
+    <dd style="margin: 0 0 10px;">${item.summary}</dd>
+    <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Park/Forest:</dt>
+    <dd style="margin: 0 0 10px;">${item.park}</dd>
+    <dt style="font-weight: bold; color: #333; margin-bottom: 5px;">Case Link:</dt>
+    <dd style="margin: 0 0 10px;"><a href="${item.case_link}" target="_blank" style="color: #0073aa; text-decoration: none;">More Info</a></dd>
+  </dl>
+</div>
+`;
 }
 
 function showDetailView(item) {
   // Build the detailed popup content using your helper function.
   const popupContent = buildPopupContent(item);
-
   // Update only the infoContent section so that the header remains intact.
   const infoContentDiv = document.getElementById("infoContent");
   infoContentDiv.innerHTML = `
@@ -85,7 +77,6 @@ function showDetailView(item) {
     <h3 style="margin-bottom: 15px;">Data Point Details</h3>
     ${popupContent}
   `;
-
   // Attach event listener to the Back button.
   document.getElementById("backButton").addEventListener("click", () => {
     // Reset the map view to the default center and zoom level.
@@ -97,7 +88,6 @@ function showDetailView(item) {
       window.populateNamesList();
     }
   });
-
   // Zoom in on the selected data point.
   const lat = parseFloat(item.latitude);
   const lng = parseFloat(item.longitude);
@@ -200,7 +190,6 @@ function updateMapForFilters() {
     addMarkers(map, filtered, buildPopupContent, showDetailView, markerCluster);
   }
   document.getElementById("caseTotal").textContent = filtered.length;
-  
   const parkFilterValue = document.getElementById("park").value.trim().toLowerCase();
   if (parkFilterValue && npBoundariesRef.nationalParksData && npBoundariesRef.nationalParksData.features) {
     const matchingFeature = npBoundariesRef.nationalParksData.features.find(feature =>
@@ -219,13 +208,9 @@ function updateMapForFilters() {
 // ----------------------------------------------------------------------
 const { map, defaultTileLayer, terrainTileLayer, satelliteTileLayer, markerCluster } = initMap();
 window.map = map; // Expose globally
-
-// Expose populateNamesList globally so UI toggles can call it.
 window.populateNamesList = populateNamesList;
 
-// ----------------------------------------------------------------------
 // Preload NP Boundaries (for Location List)
-// ----------------------------------------------------------------------
 async function loadNPBoundariesData() {
   try {
     const response = await fetch("https://themissinglist.com/data/US_National_Parks.geojson");
@@ -240,12 +225,10 @@ async function loadNPBoundariesData() {
 // UI and Data Initialization
 // ----------------------------------------------------------------------
 setupUI(updateMapForFilters, populateNamesList);
-
 async function initializeData() {
   try {
     // Preload NP boundaries data
     await loadNPBoundariesData();
-    
     missingData = await loadDataFromAPI();
     missingData.sort((a, b) => Date.parse(a.date_missing) - Date.parse(b.date_missing));
     let minDate = Infinity;
@@ -282,7 +265,6 @@ function displayError(message) {
   errorDiv.style.margin = "10px";
   errorDiv.style.textAlign = "center";
   errorDiv.textContent = message;
-  
   const retryButton = document.createElement("button");
   retryButton.textContent = "Retry";
   retryButton.style.marginLeft = "10px";
@@ -291,7 +273,6 @@ function displayError(message) {
     initializeData();
   });
   errorDiv.appendChild(retryButton);
-  
   const content = document.getElementById("content");
   if (content) {
     content.parentNode.insertBefore(errorDiv, content);
@@ -303,6 +284,45 @@ function displayError(message) {
 initializeData();
 
 // ----------------------------------------------------------------------
+// Filtering Event Listeners
+// ----------------------------------------------------------------------
+document.getElementById("age").addEventListener("input", function () {
+  // Update the displayed Age value
+  document.getElementById("ageValue").textContent = this.value;
+  updateMapForFilters();
+});
+
+document.getElementById("dateSlider").addEventListener("input", function () {
+  // Convert the slider value (timestamp) into a readable date and update the display
+  const currentDate = parseInt(this.value);
+  document.getElementById("dateValue").textContent = new Date(currentDate).toLocaleDateString();
+  updateMapForFilters();
+});
+
+document.getElementById("gender").addEventListener("change", updateMapForFilters);
+document.getElementById("summary").addEventListener("input", updateMapForFilters);
+document.getElementById("park").addEventListener("input", updateMapForFilters);
+
+document.getElementById("applyFilters").addEventListener("click", updateMapForFilters);
+
+document.getElementById("resetFilters").addEventListener("click", function () {
+  // Reset the filter inputs to their default values
+  const ageInput = document.getElementById("age");
+  ageInput.value = ageInput.max;
+  document.getElementById("ageValue").textContent = ageInput.max;
+  
+  const dateSlider = document.getElementById("dateSlider");
+  dateSlider.value = dateSlider.max;
+  document.getElementById("dateValue").textContent = new Date(parseInt(dateSlider.max)).toLocaleDateString();
+  
+  document.getElementById("gender").value = "";
+  document.getElementById("summary").value = "";
+  document.getElementById("park").value = "";
+  
+  updateMapForFilters();
+});
+
+// ----------------------------------------------------------------------
 // Additional Map Controls
 // ----------------------------------------------------------------------
 (function addExpandButtonToZoomControl() {
@@ -311,7 +331,6 @@ initializeData();
     if (zoomControl) {
       const oldBtn = zoomControl.querySelector('#expandMapButton');
       if (oldBtn) oldBtn.remove();
-
       const expandButton = document.createElement('a');
       expandButton.id = 'expandMapButton';
       expandButton.href = "#";
@@ -328,9 +347,7 @@ initializeData();
       expandButton.style.backgroundColor = 'rgba(255,255,255,0.8)';
       expandButton.style.border = '1px solid #ccc';
       expandButton.style.cursor = 'pointer';
-      
       zoomControl.appendChild(expandButton);
-      
       let mapExpanded = false;
       expandButton.addEventListener('click', function(e) {
         e.preventDefault();
@@ -469,5 +486,4 @@ document.getElementById("stopButton").addEventListener("click", function() {
 
 // Refresh API data every 5 minutes.
 setInterval(initializeData, 300000);
-
 console.log("App initialized.");
