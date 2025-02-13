@@ -39,7 +39,8 @@ function getParkKeyFromUnitName(unitName) {
   unitName = unitName.toLowerCase();
   if (unitName.includes("yosemite")) return "yosemite";
   if (unitName.includes("yellowstone")) return "yellowstone";
-  // Add additional conditions for other parks as needed.
+  if (unitName.includes("zion")) return "zion";
+    // Add additional conditions for other parks as needed.
   return null;
 }
 
@@ -106,7 +107,7 @@ function updateTrailsList(trails, parkKey) {
     }
   });
   
-  // Apply filtering: include only features that have at least one selected property.
+  // Apply additional filtering: only include features that have at least one of the selected properties with a non-empty value.
   let filteredTrails = trails;
   if (selectedFilters.length > 0) {
     filteredTrails = trails.filter(feature => {
@@ -129,6 +130,15 @@ function updateTrailsList(trails, parkKey) {
     sortedTrails.sort((a, b) => parseFloat(b.properties.length || 0) - parseFloat(a.properties.length || 0));
   }
   
+  // Exclude any trail whose name (or default "Unnamed Trail") includes "unnamed"
+  sortedTrails = sortedTrails.filter(feature => {
+    let name = feature.properties.name;
+    if (!name) {
+      name = "Unnamed Trail";
+    }
+    return !name.toLowerCase().includes("unnamed");
+  });
+  
   // Update global variable.
   currentSortedTrails = sortedTrails;
   
@@ -136,7 +146,10 @@ function updateTrailsList(trails, parkKey) {
   const trailsListEl = document.getElementById("trailsDataList");
   trailsListEl.innerHTML = sortedTrails
     .map((feature, index) => {
-      const name = feature.properties.name || "Unnamed Trail";
+      let name = feature.properties.name;
+      if (!name) {
+        name = "Unnamed Trail";
+      }
       const length = feature.properties.length ? ` (Length: ${feature.properties.length})` : "";
       const route = feature.properties.route ? ` Route: ${feature.properties.route}` : "";
       const type = feature.properties.type ? ` Type: ${feature.properties.type}` : "";
