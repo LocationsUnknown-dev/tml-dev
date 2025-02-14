@@ -24,6 +24,21 @@ function boundsIntersect(boundsA, boundsB) {
  */
 function getFeatureBounds(feature) {
   if (!feature.geometry) return L.latLngBounds([]);
+  
+  // Handle Point geometries.
+  if (feature.geometry.type === 'Point') {
+    const coords = feature.geometry.coordinates; // [lng, lat]
+    const latlng = L.latLng(coords[1], coords[0]);
+    return L.latLngBounds(latlng, latlng);
+  }
+  
+  // Optionally, handle MultiPoint.
+  if (feature.geometry.type === 'MultiPoint') {
+    const latlngs = feature.geometry.coordinates.map(coord => L.latLng(coord[1], coord[0]));
+    return L.latLngBounds(latlngs);
+  }
+  
+  // For other geometry types, let Leaflet compute the bounds.
   const layer = L.geoJSON(feature);
   return layer.getBounds();
 }
@@ -81,10 +96,22 @@ function showSingleTrail(trailFeature, parkKey) {
     }
   });
   window.map.addLayer(selectedTrailLayer);
+  
   // Zoom to the bounds of the selected trail.
   const trailBounds = getFeatureBounds(trailFeature);
+  console.log("Trail bounds:", trailBounds); // Debug: check what's returned
   if (trailBounds.isValid()) {
-    window.map.fitBounds(trailBounds);
+    // If the bounds represent a point (degenerate bounds), use setView.
+    if (
+      trailBounds.getNorth() === trailBounds.getSouth() &&
+      trailBounds.getEast() === trailBounds.getWest()
+    ) {
+      window.map.setView(trailBounds.getCenter(), 14); // adjust zoom level as needed
+    } else {
+      window.map.fitBounds(trailBounds);
+    }
+  } else {
+    console.warn("Invalid trail bounds.");
   }
 }
 
@@ -127,7 +154,6 @@ updateGlobalTrailsCounter();
  * @param {string} parkKey - The park key for which trails are being processed.
  */
 function updateTrailsList(trails, parkKey) {
-  // Get the sort option.
   const sortValue = document.getElementById("trailsSort").value;
   
   // Get selected filter checkboxes.
@@ -172,15 +198,14 @@ function updateTrailsList(trails, parkKey) {
   });
   
   // Update the Trails & POI Mapped counter.
-    
+// **Important: Update the global variable so the click handler can access the correct feature.**
+  currentSortedTrails = sortedTrails;
+
   // Build the HTML list.
   const trailsListEl = document.getElementById("trailsDataList");
   trailsListEl.innerHTML = sortedTrails
     .map((feature, index) => {
-      let name = feature.properties.name;
-      if (!name) {
-        name = "Unnamed Trail";
-      }
+      let name = feature.properties.name || "Unnamed Trail";
       const length = feature.properties.length ? ` (Length: ${feature.properties.length})` : "";
       const route = feature.properties.route ? ` Route: ${feature.properties.route}` : "";
       const type = feature.properties.type ? ` Type: ${feature.properties.type}` : "";
@@ -195,6 +220,7 @@ function updateTrailsList(trails, parkKey) {
   document.querySelectorAll("#trailsDataList li").forEach(li => {
     li.addEventListener("click", function() {
       const index = parseInt(this.getAttribute("data-index"), 10);
+      console.log("Clicked trail index:", index, currentSortedTrails[index]); // Debug logging
       showSingleTrail(currentSortedTrails[index], parkKey);
     });
   });

@@ -8,6 +8,10 @@ export const trailsConfig = {
   "yellowstone": {
     url: "https://themissinglist.com/data/yellowstone_np.geojson.gz"
   },
+  "zion": {
+    url: "https://themissinglist.com/data/zion_np.geojson.gz"
+  },
+
   // Add more parks as needed...
 };
 
