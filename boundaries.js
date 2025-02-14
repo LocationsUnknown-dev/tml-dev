@@ -24,12 +24,31 @@ export function toggleNPBoundaries(map, npRef, button) {
             style: feature => ({ color: "#228B22", weight: 2, fillOpacity: 0.1 }),
             onEachFeature: function(feature, layer) {
               if (feature.properties && feature.properties.unit_name) {
+                // Bind a popup to show the park name.
                 layer.bindPopup("<strong>" + feature.properties.unit_name + "</strong>");
+                
+                // Single click event:
                 layer.on('click', function(e) {
-                  // Convert the park's name to lowercase for matching.
+                  // Prevent event propagation (in case map click events interfere)
+                  L.DomEvent.stopPropagation(e);
+                  
+                  // Zoom to the feature's bounds
+                  const bounds = layer.getBounds();
+                  if (bounds.isValid()) {
+                    map.fitBounds(bounds);
+                  }
+                  
+                  // Call the global function to show the Trails Data Points list.
+                  // Make sure that in your ui.js you set: window.showLocationDetailView = showLocationDetailView;
+                  if (typeof window.showLocationDetailView === 'function') {
+                    window.showLocationDetailView(feature);
+                  } else {
+                    console.warn("window.showLocationDetailView is not defined");
+                  }
+                  
+                  // Also, toggle the trails overlay if available.
                   const parkNameLower = feature.properties.unit_name.toLowerCase();
                   let matchedKey = null;
-                  // Loop through trailsConfig keys and check if the park name includes the key.
                   for (const key in trailsConfig) {
                     if (parkNameLower.includes(key)) {
                       matchedKey = key;
@@ -37,12 +56,10 @@ export function toggleNPBoundaries(map, npRef, button) {
                     }
                   }
                   if (matchedKey) {
-                    // When a park with trails is clicked, show its toggle button.
-                    addParkTrailsToggleButton(e.target._map, matchedKey);
+                    addParkTrailsToggleButton(map, matchedKey);
                   } else {
-                    // Remove any existing trails toggle buttons and overlays.
                     Object.keys(trailsConfig).forEach(key => {
-                      removeParkTrailsToggleButton(e.target._map, key);
+                      removeParkTrailsToggleButton(map, key);
                     });
                   }
                 });
@@ -52,7 +69,7 @@ export function toggleNPBoundaries(map, npRef, button) {
           map.addLayer(layer);
           npRef.layer = layer;
           npRef.nationalParksData = geojsonData;
-          // Store the NP boundaries data globally for use in the location list.
+          // Store NP boundaries data globally for other uses.
           window.nationalParksData = geojsonData;
           button.innerHTML = "Remove NP Boundaries";
         })

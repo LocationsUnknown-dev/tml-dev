@@ -470,6 +470,9 @@ function showLocationDetailView(locationFeature) {
   }
 }
 
+// Make sure it’s available globally:
+window.showLocationDetailView = showLocationDetailView;
+
 function renderCaseList() {
   if (typeof window.populateNamesList === "function") {
     window.populateNamesList();
