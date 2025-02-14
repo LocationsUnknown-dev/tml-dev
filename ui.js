@@ -88,6 +88,38 @@ function showSingleTrail(trailFeature, parkKey) {
   }
 }
 
+// In ui.js (or a dedicated file), add:
+
+function updateGlobalTrailsCounter() {
+  const parkKeys = Object.keys(trailsConfig);
+  let totalTrailsCount = 0;
+  
+  // Create an array of promises, one for each park's trails data.
+  const promises = parkKeys.map(key => {
+    return fetchTrailsData(key)
+      .then(data => {
+        if (data && data.features) {
+          totalTrailsCount += data.features.length;
+        }
+      })
+      .catch(error => {
+        console.error(`Error fetching trails for ${key}:`, error);
+      });
+  });
+  
+  // Once all fetches are done, update the counter.
+  Promise.all(promises).then(() => {
+    const counterElem = document.getElementById('trailsTotal');
+    if (counterElem) {
+      // Format the number with commas (e.g., 1,000)
+      counterElem.textContent = totalTrailsCount.toLocaleString();
+    }
+  });
+}
+
+// Call this function on initialization (or whenever appropriate)
+updateGlobalTrailsCounter();
+
 /**
  * Updates the trails list in the detail view.
  * Applies sorting and additional filtering based on the sort dropdown and filter checkboxes.
@@ -107,7 +139,7 @@ function updateTrailsList(trails, parkKey) {
     }
   });
   
-  // Apply additional filtering: only include features that have at least one of the selected properties with a non-empty value.
+  // Apply additional filtering.
   let filteredTrails = trails;
   if (selectedFilters.length > 0) {
     filteredTrails = trails.filter(feature => {
@@ -139,9 +171,8 @@ function updateTrailsList(trails, parkKey) {
     return !name.toLowerCase().includes("unnamed");
   });
   
-  // Update global variable.
-  currentSortedTrails = sortedTrails;
-  
+  // Update the Trails & POI Mapped counter.
+    
   // Build the HTML list.
   const trailsListEl = document.getElementById("trailsDataList");
   trailsListEl.innerHTML = sortedTrails
