@@ -184,12 +184,15 @@ function filterData() {
 
 function updateMapForFilters() {
   const filtered = filterData();
+  
   if (heatMapMode) {
     updateHeatLayer(map, filtered);
   } else {
     addMarkers(map, filtered, buildPopupContent, showDetailView, markerCluster);
   }
+  
   document.getElementById("caseTotal").textContent = filtered.length;
+  
   const parkFilterValue = document.getElementById("park").value.trim().toLowerCase();
   if (parkFilterValue && npBoundariesRef.nationalParksData && npBoundariesRef.nationalParksData.features) {
     const matchingFeature = npBoundariesRef.nationalParksData.features.find(feature =>
@@ -200,6 +203,20 @@ function updateMapForFilters() {
       const tempLayer = L.geoJSON(matchingFeature);
       map.fitBounds(tempLayer.getBounds());
     }
+  }
+  
+  // Count only unique locations by their unit_name.
+  if (window.nationalParksData && window.nationalParksData.features) {
+    const uniqueLocations = {};
+    window.nationalParksData.features.forEach(feature => {
+      if (feature.properties && feature.properties.unit_name) {
+        uniqueLocations[feature.properties.unit_name] = true;
+      }
+    });
+    const uniqueCount = Object.keys(uniqueLocations).length;
+    document.getElementById("locationsTotal").textContent = uniqueCount;
+  } else {
+    document.getElementById("locationsTotal").textContent = 0;
   }
 }
 
