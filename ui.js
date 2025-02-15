@@ -337,7 +337,8 @@ async function renderLocationList() {
       uniqueLocationsMap[name] = feature;
     }
   });
-  const uniqueLocations = Object.values(uniqueLocationsMap).slice(0, 20);
+  // Removed the .slice(0, 20) call to display all unique locations.
+  const uniqueLocations = Object.values(uniqueLocationsMap);
 
   // Build the list HTML.
   let listHTML = "<ul style='list-style: none; padding: 0; margin: 0;'>";
