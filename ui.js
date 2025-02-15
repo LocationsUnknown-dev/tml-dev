@@ -99,20 +99,19 @@ function showSingleTrail(trailFeature, parkKey) {
   
   // Zoom to the bounds of the selected trail.
   const trailBounds = getFeatureBounds(trailFeature);
-  console.log("Trail bounds:", trailBounds); // Debug: check what's returned
   if (trailBounds.isValid()) {
-    // If the bounds represent a point (degenerate bounds), use setView.
-    if (
-      trailBounds.getNorth() === trailBounds.getSouth() &&
-      trailBounds.getEast() === trailBounds.getWest()
-    ) {
-      window.map.setView(trailBounds.getCenter(), 14); // adjust zoom level as needed
+    // If the feature is a point, use setView with a defined zoom level.
+    if (trailBounds.getNorth() === trailBounds.getSouth() && trailBounds.getEast() === trailBounds.getWest()) {
+      window.map.setView(trailBounds.getCenter(), 14); // adjust zoom as needed
     } else {
       window.map.fitBounds(trailBounds);
     }
-  } else {
-    console.warn("Invalid trail bounds.");
   }
+  
+  // Automatically open the popup(s) for the added layer.
+  selectedTrailLayer.eachLayer(function(layer) {
+    layer.openPopup();
+  });
 }
 
 // In ui.js (or a dedicated file), add:
