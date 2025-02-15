@@ -55,6 +55,10 @@ function getParkKeyFromUnitName(unitName) {
   if (unitName.includes("yosemite")) return "yosemite";
   if (unitName.includes("yellowstone")) return "yellowstone";
   if (unitName.includes("zion")) return "zion";
+  if (unitName.includes("denali")) return "denail";
+  if (unitName.includes("gates")) return "gates";
+  if (unitName.includes("kobuk")) return "kobuk";
+  if (unitName.includes("grand canyon")) return "grand canyon";
     // Add additional conditions for other parks as needed.
   return null;
 }

@@ -3,13 +3,25 @@
 // Configuration object mapping park keys (in lowercase) to their trails file URL.
 export const trailsConfig = {
   "yosemite": {
-    url: "https://themissinglist.com/data/yosemite_np.geojson.gz"
+    url: "https://themissinglist.com/data/nps/yosemite_np.geojson.gz"
   },
   "yellowstone": {
-    url: "https://themissinglist.com/data/yellowstone_np.geojson.gz"
+    url: "https://themissinglist.com/data/nps/yellowstone_np.geojson.gz"
   },
   "zion": {
-    url: "https://themissinglist.com/data/zion_np.geojson.gz"
+    url: "https://themissinglist.com/data/nps/zion_np.geojson.gz"
+  },
+  "denali": {
+    url: "https://themissinglist.com/data/nps/denali_np.geojson.gz"
+  },
+  "gates": {
+    url: "https://themissinglist.com/data/nps/gatesofthearctic_np.geojson.gz"
+  },
+  "kobuk": {
+    url: "https://themissinglist.com/data/nps/kobuk_np.geojson.gz"
+  },
+  "grand canyon": {
+    url: "https://themissinglist.com/data/nps/grand-canyon_np.geojson.gz"
   },
 
   // Add more parks as needed...
