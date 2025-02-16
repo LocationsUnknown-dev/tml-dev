@@ -102,6 +102,69 @@ html, body {
   box-sizing: border-box;
   font-size: 14px;
 }
+
+/* Expandable Layers Toggle Container */
+#layersToggleContainer {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(255,255,255,0.95);
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  z-index: 1000;
+  overflow: hidden;
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+/* Expand on hover */
+#layersToggleContainer:hover {
+  width: 200px; /* Adjust width as needed */
+  height: auto;
+}
+
+/* The fixed header button */
+#layersToggleButton {
+  width: 100%;
+  height: 40px;
+  cursor: pointer;
+  text-align: center;
+  line-height: 40px;
+  font-weight: bold;
+  background: #f7f7f7;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Hidden content initially */
+#layersToggleContent {
+  display: none;
+  padding: 5px;
+}
+
+/* Show content on hover */
+#layersToggleContainer:hover #layersToggleContent {
+  display: block;
+}
+
+/* Style individual toggle buttons */
+#layersToggleContent button {
+  display: block;
+  width: 100%;
+  margin: 3px 0;
+  padding: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  background: #f7f7f7;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  text-align: left;
+}
+
+#layersToggleContent button:hover {
+  background: #e7e7e7;
+}
+
 </style>
 
 <div id="content">
@@ -140,13 +203,19 @@ html, body {
   
   <!-- Map Container -->
   <div id="map">
-    <div id="terrainToggleButton" style="position:absolute; top:10px; right:10px; background: rgba(255,255,255,0.95); border: 1px solid #ccc; padding: 5px 10px; z-index:1000;">Terrain</div>
-    <div id="satelliteToggleButton" style="position:absolute; top:10px; right:90px; background: rgba(255,255,255,0.95); border: 1px solid #ccc; padding: 5px 10px; z-index:1000;">Satellite</div>
-    <div id="npBoundariesToggleButton" style="position:absolute; top:50px; right:10px; background: rgba(255,255,255,0.95); border: 1px solid #ccc; padding: 5px 10px; z-index:1000;">NP Boundaries</div>
-    <div id="statesToggleButton" style="position:absolute; top:90px; right:10px; background: rgba(255,255,255,0.95); border: 1px solid #ccc; padding: 5px 10px; z-index:1000;">States</div>
-    <div id="heatMapToggleButton" style="position:absolute; top:130px; right:10px; background: rgba(255,255,255,0.95); border: 1px solid #ccc; padding: 5px 10px; z-index:1000;">Heat Map</div>
-    <!-- The Expand Map button will be appended by JavaScript into the zoom control -->
+  <!-- Expandable Layers Toggle Container -->
+  <div id="layersToggleContainer">
+    <div id="layersToggleButton">Layers</div>
+    <div id="layersToggleContent">
+      <button id="terrainToggleButton">Terrain</button>
+      <button id="satelliteToggleButton">Satellite</button>
+      <button id="npBoundariesToggleButton">NP Boundaries</button>
+      <button id="statesToggleButton">States</button>
+      <button id="heatMapToggleButton">Heat Map</button>
+    </div>
   </div>
+  <!-- The rest of your map markup remains unchanged -->
+</div>
   
   <!-- Case List Panel (styled to match Filter) -->
   <div id="info">
