@@ -241,9 +241,18 @@ html, body {
     <span>Terrain</span>
   </button>
   <button id="satelliteToggleButton">Satellite</button>
-  <button id="npBoundariesToggleButton">NP Boundaries</button>
-  <button id="statesToggleButton">States</button>
-  <button id="heatMapToggleButton">Heat Map</button>
+  <button id="npBoundariesToggleButton">
+  <img src="http://themissinglist.com/wp-content/uploads/2025/02/arches.png" alt="NP Boundaries Icon">
+  <span>Natl. Parks</span>
+</button>
+  <button id="statesToggleButton">
+  <img src="http://themissinglist.com/wp-content/uploads/2025/02/map.png" alt="States Icon">
+  <span>States</span>
+</button>
+  <button id="heatMapToggleButton">
+  <img src="http://themissinglist.com/wp-content/uploads/2025/02/heat-map.png" alt="Heat Map Icon">
+  <span>Heat Map</span>
+</button>
 </div>
 
 </div>

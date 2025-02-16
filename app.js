@@ -391,9 +391,10 @@ try {
   // Get the toggle button elements
   const satelliteToggleButton = document.getElementById("satelliteToggleButton");
   const terrainToggleButton = document.getElementById("terrainToggleButton");
+  const statesToggleButton = document.getElementById("statesToggleButton");
 
-  if (!satelliteToggleButton || !terrainToggleButton) {
-    throw new Error("Satellite or Terrain toggle button not found in the DOM.");
+  if (!satelliteToggleButton || !terrainToggleButton || !statesToggleButton) {
+    throw new Error("Satellite, Terrain, or States toggle button not found in the DOM.");
   }
 
   // Ensure the Satellite button has its original content stored in a data attribute.
@@ -409,6 +410,11 @@ try {
   if (!terrainToggleButton.dataset.original) {
     terrainToggleButton.dataset.original = terrainToggleButton.innerHTML;
   }
+  
+  // Ensure the States button has its original content stored in a data attribute.
+  if (!statesToggleButton.dataset.original) {
+    statesToggleButton.dataset.original = statesToggleButton.innerHTML;
+  }
 
   satelliteToggleButton.addEventListener("click", function() {
     satelliteMode = !satelliteMode;
@@ -422,9 +428,9 @@ try {
       // Reset the Terrain toggle to its original content.
       terrainMode = false;
       terrainToggleButton.innerHTML = terrainToggleButton.dataset.original;
-      // Reset the States toggle.
+      // Reset the States toggle to its original content.
       statesMode = false;
-      document.getElementById("statesToggleButton").innerHTML = "States";
+      statesToggleButton.innerHTML = statesToggleButton.dataset.original;
       // Reset Heat Map toggle if active.
       if (heatMapMode) {
         removeHeatLayer(map);
@@ -467,7 +473,10 @@ terrainToggleButton.addEventListener("click", function() {
       satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
     }
     statesMode = false;
-    document.getElementById("statesToggleButton").innerHTML = "States";
+    const statesToggleButton = document.getElementById("statesToggleButton");
+    if (statesToggleButton && statesToggleButton.dataset.original) {
+  statesToggleButton.innerHTML = statesToggleButton.dataset.original;
+    }
     if (heatMapMode) {
       removeHeatLayer(map);
       heatMapMode = false;
@@ -491,16 +500,31 @@ document.getElementById("statesToggleButton").addEventListener("click", function
   setTimeout(() => { map.invalidateSize(); }, 200);
 });
 
-document.getElementById("heatMapToggleButton").addEventListener("click", function() {
+const heatMapToggleButton = document.getElementById("heatMapToggleButton");
+
+// Ensure the Heat Map button has its original content stored.
+if (!heatMapToggleButton.dataset.original) {
+  heatMapToggleButton.dataset.original = heatMapToggleButton.innerHTML;
+}
+
+heatMapToggleButton.addEventListener("click", function() {
   heatMapMode = !heatMapMode;
+  // Get the <span> element inside the button.
+  const span = heatMapToggleButton.querySelector("span");
+  
   if (heatMapMode) {
+    // When turning the heat map on:
     if (map.hasLayer(markerCluster)) map.removeLayer(markerCluster);
     updateHeatLayer(map, missingData);
-    this.innerHTML = "Remove Heat Map";
+    // Update only the text within the span.
+    if (span) {
+      span.textContent = "Heat Map";
+    }
   } else {
+    // When turning it off, restore the original markup.
     removeHeatLayer(map);
     map.addLayer(markerCluster);
-    this.innerHTML = "Heat Map";
+    heatMapToggleButton.innerHTML = heatMapToggleButton.dataset.original;
   }
   setTimeout(() => { map.invalidateSize(); }, 200);
 });
