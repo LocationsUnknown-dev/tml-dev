@@ -409,13 +409,21 @@ document.getElementById("satelliteToggleButton").addEventListener("click", funct
   setTimeout(() => { map.invalidateSize(); }, 200);
 });
 
-document.getElementById("terrainToggleButton").addEventListener("click", function() {
+// ----------------------------------------------------------------------
+// Updated Terrain Toggle Event Listener with Preserved Icon/Text
+// ----------------------------------------------------------------------
+const terrainToggleButton = document.getElementById("terrainToggleButton");
+// Store the original HTML (with icon and text) of the Terrain button.
+const originalTerrainHTML = terrainToggleButton.innerHTML;
+
+terrainToggleButton.addEventListener("click", function() {
   terrainMode = !terrainMode;
   if (terrainMode) {
     if (map.hasLayer(defaultTileLayer)) map.removeLayer(defaultTileLayer);
     if (map.hasLayer(satelliteTileLayer)) map.removeLayer(satelliteTileLayer);
     map.addLayer(terrainTileLayer);
-    this.innerHTML = "Default";
+    // Restore the original content
+    terrainToggleButton.innerHTML = originalTerrainHTML;
     satelliteMode = false;
     document.getElementById("satelliteToggleButton").innerHTML = "Satellite";
     statesMode = false;
@@ -429,7 +437,8 @@ document.getElementById("terrainToggleButton").addEventListener("click", functio
   } else {
     if (map.hasLayer(terrainTileLayer)) map.removeLayer(terrainTileLayer);
     map.addLayer(defaultTileLayer);
-    this.innerHTML = "Terrain";
+    // Restore original content
+    terrainToggleButton.innerHTML = originalTerrainHTML;
   }
   setTimeout(() => { map.invalidateSize(); }, 200);
 });
@@ -457,6 +466,7 @@ document.getElementById("heatMapToggleButton").addEventListener("click", functio
   setTimeout(() => { map.invalidateSize(); }, 200);
 });
 
+// ----------------------------------------------------------------------
 // Playback controls.
 document.getElementById("playButton").addEventListener("click", function() {
   if (playInterval) return;

@@ -108,8 +108,8 @@ html, body {
   position: absolute;
   top: 10px;
   right: 10px;
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
   background-color: rgba(255,255,255,0.95);
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -120,47 +120,74 @@ html, body {
 
 /* Expand on hover */
 #layersToggleContainer:hover {
-  width: 200px; /* Adjust width as needed */
+  width: 240px; /* Increased width to accommodate larger buttons */
   height: auto;
 }
 
-/* The fixed header button */
+/* Header button using the image */
 #layersToggleButton {
   width: 100%;
-  height: 40px;
+  height: 60px;
   cursor: pointer;
-  text-align: center;
-  line-height: 40px;
-  font-weight: bold;
   background: #f7f7f7;
   border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Hidden content initially */
+/* Ensure the image fits nicely */
+#layersToggleButton img {
+  max-width: 80%;
+  max-height: 80%;
+  object-fit: contain;
+}
+
+/* Expandable content container using flex layout */
 #layersToggleContent {
   display: none;
   padding: 5px;
+  /* Use flex to arrange the toggle buttons */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
 }
 
 /* Show content on hover */
 #layersToggleContainer:hover #layersToggleContent {
-  display: block;
+  display: flex;
 }
 
-/* Style individual toggle buttons */
+/* Make the individual toggle buttons larger and square */
 #layersToggleContent button {
-  display: block;
-  width: 100%;
-  margin: 3px 0;
-  padding: 5px;
-  font-size: 14px;
-  cursor: pointer;
+  width: 80px;
+  height: 80px;
   background: #f7f7f7;
   border: 1px solid #ddd;
-  border-radius: 3px;
-  text-align: left;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column; /* Stack icon and text vertically */
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
 }
 
+/* Adjust image styling within the button */
+#layersToggleContent button img {
+  max-width: 60px; /* Adjust size as needed */
+  max-height: 60px;
+  object-fit: contain;
+}
+
+/* Optional: Style the text within the button */
+#layersToggleContent button span {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+}
+  
 #layersToggleContent button:hover {
   background: #e7e7e7;
 }
@@ -205,15 +232,21 @@ html, body {
   <div id="map">
   <!-- Expandable Layers Toggle Container -->
   <div id="layersToggleContainer">
-    <div id="layersToggleButton">Layers</div>
-    <div id="layersToggleContent">
-      <button id="terrainToggleButton">Terrain</button>
-      <button id="satelliteToggleButton">Satellite</button>
-      <button id="npBoundariesToggleButton">NP Boundaries</button>
-      <button id="statesToggleButton">States</button>
-      <button id="heatMapToggleButton">Heat Map</button>
-    </div>
+  <div id="layersToggleButton">
+    <img src="http://themissinglist.com/wp-content/uploads/2025/02/Maps-Layers-icon.png" alt="Layers">
   </div>
+  <div id="layersToggleContent">
+  <button id="terrainToggleButton">
+    <img src="http://themissinglist.com/wp-content/uploads/2025/02/terrain.png" alt="Terrain Icon">
+    <span>Terrain</span>
+  </button>
+  <button id="satelliteToggleButton">Satellite</button>
+  <button id="npBoundariesToggleButton">NP Boundaries</button>
+  <button id="statesToggleButton">States</button>
+  <button id="heatMapToggleButton">Heat Map</button>
+</div>
+
+</div>
   <!-- The rest of your map markup remains unchanged -->
 </div>
   
@@ -241,4 +274,18 @@ html, body {
   </div>
 </div>
 
+<div id="attribution" style="text-align: center; padding: 10px 0; font-size: 12px;">
+  <a href="https://www.flaticon.com/free-icons/terrain" title="terrain icons">
+    Terrain icons created by Darius Dan - Flaticon
+  </a>
+  </div>
+<div id="attribution" style="text-align: center; padding: 10px 0; font-size: 12px;">
+  <a href="https://www.flaticon.com/free-icons/surveillance" title="surveillance icons">
+    Surveillance icons created by Eucalyp - Flaticon
+  </a>
+</div>
+
+
 <?php get_footer(); ?>
+
+
