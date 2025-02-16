@@ -384,37 +384,74 @@ document.getElementById("resetFilters").addEventListener("click", function () {
   }, 500);
 })();
 
-document.getElementById("satelliteToggleButton").addEventListener("click", function() {
-  satelliteMode = !satelliteMode;
-  if (satelliteMode) {
-    if (map.hasLayer(defaultTileLayer)) map.removeLayer(defaultTileLayer);
-    if (map.hasLayer(terrainTileLayer)) map.removeLayer(terrainTileLayer);
-    map.addLayer(satelliteTileLayer);
-    this.innerHTML = "Default";
-    terrainMode = false;
-    document.getElementById("terrainToggleButton").innerHTML = "Terrain";
-    statesMode = false;
-    document.getElementById("statesToggleButton").innerHTML = "States";
-    if (heatMapMode) {
-      removeHeatLayer(map);
-      heatMapMode = false;
-      document.getElementById("heatMapToggleButton").innerHTML = "Heat Map";
-      map.addLayer(markerCluster);
-    }
-  } else {
-    if (map.hasLayer(satelliteTileLayer)) map.removeLayer(satelliteTileLayer);
-    map.addLayer(defaultTileLayer);
-    this.innerHTML = "Satellite";
+// --------------------------
+// Updated Satellite Toggle Code with Data Attribute Check
+// --------------------------
+try {
+  // Get the toggle button elements
+  const satelliteToggleButton = document.getElementById("satelliteToggleButton");
+  const terrainToggleButton = document.getElementById("terrainToggleButton");
+
+  if (!satelliteToggleButton || !terrainToggleButton) {
+    throw new Error("Satellite or Terrain toggle button not found in the DOM.");
   }
-  setTimeout(() => { map.invalidateSize(); }, 200);
-});
+
+  // Ensure the Satellite button has its original content stored in a data attribute.
+  if (!satelliteToggleButton.dataset.original) {
+    satelliteToggleButton.dataset.original = `
+      <img src="http://themissinglist.com/wp-content/uploads/2025/02/signal-satellite.png" alt="Satellite Icon">
+      <span>Satellite</span>
+    `;
+    satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
+  }
+
+  // Ensure the Terrain button has its original content stored in a data attribute.
+  if (!terrainToggleButton.dataset.original) {
+    terrainToggleButton.dataset.original = terrainToggleButton.innerHTML;
+  }
+
+  satelliteToggleButton.addEventListener("click", function() {
+    satelliteMode = !satelliteMode;
+    if (satelliteMode) {
+      // Remove conflicting layers.
+      if (map.hasLayer(defaultTileLayer)) map.removeLayer(defaultTileLayer);
+      if (map.hasLayer(terrainTileLayer)) map.removeLayer(terrainTileLayer);
+      map.addLayer(satelliteTileLayer);
+      // Restore Satellite toggle content from the stored data.
+      satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
+      // Reset the Terrain toggle to its original content.
+      terrainMode = false;
+      terrainToggleButton.innerHTML = terrainToggleButton.dataset.original;
+      // Reset the States toggle.
+      statesMode = false;
+      document.getElementById("statesToggleButton").innerHTML = "States";
+      // Reset Heat Map toggle if active.
+      if (heatMapMode) {
+        removeHeatLayer(map);
+        heatMapMode = false;
+        document.getElementById("heatMapToggleButton").innerHTML = "Heat Map";
+        map.addLayer(markerCluster);
+      }
+    } else {
+      if (map.hasLayer(satelliteTileLayer)) map.removeLayer(satelliteTileLayer);
+      map.addLayer(defaultTileLayer);
+      // Restore Satellite toggle content.
+      satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
+    }
+    setTimeout(() => { map.invalidateSize(); }, 200);
+  });
+} catch (e) {
+  console.error("Error setting up Satellite toggle:", e);
+}
 
 // ----------------------------------------------------------------------
 // Updated Terrain Toggle Event Listener with Preserved Icon/Text
 // ----------------------------------------------------------------------
 const terrainToggleButton = document.getElementById("terrainToggleButton");
-// Store the original HTML (with icon and text) of the Terrain button.
-const originalTerrainHTML = terrainToggleButton.innerHTML;
+// Ensure the Terrain button has its original content stored in a data attribute.
+if (!terrainToggleButton.dataset.original) {
+  terrainToggleButton.dataset.original = terrainToggleButton.innerHTML;
+}
 
 terrainToggleButton.addEventListener("click", function() {
   terrainMode = !terrainMode;
@@ -422,10 +459,13 @@ terrainToggleButton.addEventListener("click", function() {
     if (map.hasLayer(defaultTileLayer)) map.removeLayer(defaultTileLayer);
     if (map.hasLayer(satelliteTileLayer)) map.removeLayer(satelliteTileLayer);
     map.addLayer(terrainTileLayer);
-    // Restore the original content
-    terrainToggleButton.innerHTML = originalTerrainHTML;
-    satelliteMode = false;
-    document.getElementById("satelliteToggleButton").innerHTML = "Satellite";
+    // Restore Terrain button from its data attribute.
+    terrainToggleButton.innerHTML = terrainToggleButton.dataset.original;
+    // Reset Satellite toggle using its data attribute.
+    const satelliteToggleButton = document.getElementById("satelliteToggleButton");
+    if (satelliteToggleButton && satelliteToggleButton.dataset.original) {
+      satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
+    }
     statesMode = false;
     document.getElementById("statesToggleButton").innerHTML = "States";
     if (heatMapMode) {
@@ -437,8 +477,7 @@ terrainToggleButton.addEventListener("click", function() {
   } else {
     if (map.hasLayer(terrainTileLayer)) map.removeLayer(terrainTileLayer);
     map.addLayer(defaultTileLayer);
-    // Restore original content
-    terrainToggleButton.innerHTML = originalTerrainHTML;
+    terrainToggleButton.innerHTML = terrainToggleButton.dataset.original;
   }
   setTimeout(() => { map.invalidateSize(); }, 200);
 });
