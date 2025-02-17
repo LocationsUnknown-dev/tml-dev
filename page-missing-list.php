@@ -192,6 +192,11 @@ html, body {
   background: #e7e7e7;
 }
 
+/* Add a blue outline for active toggles */
+.active-toggle {
+  outline: 2px solid blue;
+}
+
 </style>
 
 <div id="content">
@@ -233,7 +238,7 @@ html, body {
   <!-- Expandable Layers Toggle Container -->
   <div id="layersToggleContainer">
   <div id="layersToggleButton">
-    <img src="http://themissinglist.com/wp-content/uploads/2025/02/Maps-Layers-icon.png" alt="Layers">
+    <img src="http://themissinglist.com/wp-content/uploads/2025/02/map-1.png" alt="Layers">
   </div>
   <div id="layersToggleContent">
   <button id="terrainToggleButton">

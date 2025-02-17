@@ -392,9 +392,10 @@ try {
   const satelliteToggleButton = document.getElementById("satelliteToggleButton");
   const terrainToggleButton = document.getElementById("terrainToggleButton");
   const statesToggleButton = document.getElementById("statesToggleButton");
+  const heatMapToggleButton = document.getElementById("heatMapToggleButton");
 
-  if (!satelliteToggleButton || !terrainToggleButton || !statesToggleButton) {
-    throw new Error("Satellite, Terrain, or States toggle button not found in the DOM.");
+  if (!satelliteToggleButton || !terrainToggleButton || !statesToggleButton || !heatMapToggleButton) {
+    throw new Error("One or more toggle buttons not found in the DOM.");
   }
 
   // Ensure the Satellite button has its original content stored in a data attribute.
@@ -416,6 +417,20 @@ try {
     statesToggleButton.dataset.original = statesToggleButton.innerHTML;
   }
 
+  // Define the original markup for the Heat Map toggle.
+  const heatMapOriginalMarkup = `
+    <img src="http://themissinglist.com/wp-content/uploads/2025/02/heat-map.png" alt="Heat Map Icon">
+    <span>Heat Map</span>
+  `;
+  // Set the original markup if not already set.
+  if (!heatMapToggleButton.dataset.original) {
+    heatMapToggleButton.dataset.original = heatMapOriginalMarkup;
+    heatMapToggleButton.innerHTML = heatMapOriginalMarkup;
+  }
+
+  // --------------------------
+  // Satellite Toggle Event Listener
+  // --------------------------
   satelliteToggleButton.addEventListener("click", function() {
     satelliteMode = !satelliteMode;
     if (satelliteMode) {
@@ -423,7 +438,7 @@ try {
       if (map.hasLayer(defaultTileLayer)) map.removeLayer(defaultTileLayer);
       if (map.hasLayer(terrainTileLayer)) map.removeLayer(terrainTileLayer);
       map.addLayer(satelliteTileLayer);
-      // Restore Satellite toggle content from the stored data.
+      // Restore Satellite toggle content.
       satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
       // Reset the Terrain toggle to its original content.
       terrainMode = false;
@@ -435,7 +450,7 @@ try {
       if (heatMapMode) {
         removeHeatLayer(map);
         heatMapMode = false;
-        document.getElementById("heatMapToggleButton").innerHTML = "Heat Map";
+        heatMapToggleButton.innerHTML = heatMapToggleButton.dataset.original;
         map.addLayer(markerCluster);
       }
     } else {
@@ -451,7 +466,7 @@ try {
 }
 
 // ----------------------------------------------------------------------
-// Updated Terrain Toggle Event Listener with Preserved Icon/Text
+// Terrain Toggle Event Listener
 // ----------------------------------------------------------------------
 const terrainToggleButton = document.getElementById("terrainToggleButton");
 // Ensure the Terrain button has its original content stored in a data attribute.
@@ -465,9 +480,10 @@ terrainToggleButton.addEventListener("click", function() {
     if (map.hasLayer(defaultTileLayer)) map.removeLayer(defaultTileLayer);
     if (map.hasLayer(satelliteTileLayer)) map.removeLayer(satelliteTileLayer);
     map.addLayer(terrainTileLayer);
-    // Restore Terrain button from its data attribute.
+    // Restore Terrain button content.
     terrainToggleButton.innerHTML = terrainToggleButton.dataset.original;
-    // Reset Satellite toggle using its data attribute.
+    
+    // Reset Satellite toggle.
     const satelliteToggleButton = document.getElementById("satelliteToggleButton");
     if (satelliteToggleButton && satelliteToggleButton.dataset.original) {
       satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
@@ -475,18 +491,22 @@ terrainToggleButton.addEventListener("click", function() {
     statesMode = false;
     const statesToggleButton = document.getElementById("statesToggleButton");
     if (statesToggleButton && statesToggleButton.dataset.original) {
-  statesToggleButton.innerHTML = statesToggleButton.dataset.original;
+      statesToggleButton.innerHTML = statesToggleButton.dataset.original;
     }
+    // Reset Heat Map toggle if active.
     if (heatMapMode) {
       removeHeatLayer(map);
       heatMapMode = false;
-      document.getElementById("heatMapToggleButton").innerHTML = "Heat Map";
+      heatMapToggleButton.innerHTML = heatMapToggleButton.dataset.original;
       map.addLayer(markerCluster);
     }
   } else {
     if (map.hasLayer(terrainTileLayer)) map.removeLayer(terrainTileLayer);
     map.addLayer(defaultTileLayer);
     terrainToggleButton.innerHTML = terrainToggleButton.dataset.original;
+    if (satelliteToggleButton && satelliteToggleButton.dataset.original) {
+      satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
+    }
   }
   setTimeout(() => { map.invalidateSize(); }, 200);
 });
@@ -500,28 +520,26 @@ document.getElementById("statesToggleButton").addEventListener("click", function
   setTimeout(() => { map.invalidateSize(); }, 200);
 });
 
+// ----------------------------------------------------------------------
+// Heat Map Toggle Event Listener
+// ----------------------------------------------------------------------
 const heatMapToggleButton = document.getElementById("heatMapToggleButton");
-
-// Ensure the Heat Map button has its original content stored.
-if (!heatMapToggleButton.dataset.original) {
-  heatMapToggleButton.dataset.original = heatMapToggleButton.innerHTML;
-}
+// (The original markup for the Heat Map toggle has been set above.)
 
 heatMapToggleButton.addEventListener("click", function() {
   heatMapMode = !heatMapMode;
-  // Get the <span> element inside the button.
   const span = heatMapToggleButton.querySelector("span");
   
   if (heatMapMode) {
-    // When turning the heat map on:
+    // Turn the heat map on.
     if (map.hasLayer(markerCluster)) map.removeLayer(markerCluster);
     updateHeatLayer(map, missingData);
-    // Update only the text within the span.
+    // Update only the text within the <span> (keeping the icon).
     if (span) {
       span.textContent = "Heat Map";
     }
   } else {
-    // When turning it off, restore the original markup.
+    // Turn the heat map off: remove its layer, re-add the marker cluster, and restore full markup.
     removeHeatLayer(map);
     map.addLayer(markerCluster);
     heatMapToggleButton.innerHTML = heatMapToggleButton.dataset.original;
