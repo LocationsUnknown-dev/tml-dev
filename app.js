@@ -388,17 +388,26 @@ document.getElementById("resetFilters").addEventListener("click", function () {
 // Updated Satellite Toggle Code with Data Attribute Check
 // --------------------------
 try {
-  // Get the toggle button elements
+  // Get toggle button elements for all overlays and base layers
   const satelliteToggleButton = document.getElementById("satelliteToggleButton");
   const terrainToggleButton = document.getElementById("terrainToggleButton");
   const statesToggleButton = document.getElementById("statesToggleButton");
   const heatMapToggleButton = document.getElementById("heatMapToggleButton");
+  const npBoundariesToggleButton = document.getElementById("npBoundariesToggleButton");
+  const nationalForestToggleButton = document.getElementById("nationalForestToggleButton");
 
-  if (!satelliteToggleButton || !terrainToggleButton || !statesToggleButton || !heatMapToggleButton) {
+  if (
+    !satelliteToggleButton ||
+    !terrainToggleButton ||
+    !statesToggleButton ||
+    !heatMapToggleButton ||
+    !npBoundariesToggleButton ||
+    !nationalForestToggleButton
+  ) {
     throw new Error("One or more toggle buttons not found in the DOM.");
   }
 
-  // Ensure the Satellite button has its original content stored in a data attribute.
+  // --- Store original markup for each button ---
   if (!satelliteToggleButton.dataset.original) {
     satelliteToggleButton.dataset.original = `
       <img src="http://themissinglist.com/wp-content/uploads/2025/02/signal-satellite.png" alt="Satellite Icon">
@@ -406,26 +415,30 @@ try {
     `;
     satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
   }
-
-  // Ensure the Terrain button has its original content stored in a data attribute.
   if (!terrainToggleButton.dataset.original) {
     terrainToggleButton.dataset.original = terrainToggleButton.innerHTML;
   }
-  
-  // Ensure the States button has its original content stored in a data attribute.
   if (!statesToggleButton.dataset.original) {
     statesToggleButton.dataset.original = statesToggleButton.innerHTML;
   }
-
-  // Define the original markup for the Heat Map toggle.
-  const heatMapOriginalMarkup = `
-    <img src="http://themissinglist.com/wp-content/uploads/2025/02/heat-map.png" alt="Heat Map Icon">
-    <span>Heat Map</span>
-  `;
-  // Set the original markup if not already set.
   if (!heatMapToggleButton.dataset.original) {
-    heatMapToggleButton.dataset.original = heatMapOriginalMarkup;
-    heatMapToggleButton.innerHTML = heatMapOriginalMarkup;
+    heatMapToggleButton.dataset.original = `
+      <img src="http://themissinglist.com/wp-content/uploads/2025/02/heat-map.png" alt="Heat Map Icon">
+      <span>Heat Map</span>
+    `;
+    heatMapToggleButton.innerHTML = heatMapToggleButton.dataset.original;
+  }
+  if (!npBoundariesToggleButton.dataset.original) {
+    // Assuming NP Boundaries button markup is already in your HTML.
+    npBoundariesToggleButton.dataset.original = npBoundariesToggleButton.innerHTML;
+  }
+  // Update the National Forest toggle markup to use the new icon.
+  if (!nationalForestToggleButton.dataset.original) {
+    nationalForestToggleButton.dataset.original = `
+      <img src="http://themissinglist.com/wp-content/uploads/2025/02/forest.png" alt="National Forest Icon">
+      <span>Natl. Forest</span>
+    `;
+    nationalForestToggleButton.innerHTML = nationalForestToggleButton.dataset.original;
   }
 
   // --------------------------
@@ -434,118 +447,194 @@ try {
   satelliteToggleButton.addEventListener("click", function() {
     satelliteMode = !satelliteMode;
     if (satelliteMode) {
-      // Remove conflicting layers.
+      // Remove default and terrain layers.
       if (map.hasLayer(defaultTileLayer)) map.removeLayer(defaultTileLayer);
       if (map.hasLayer(terrainTileLayer)) map.removeLayer(terrainTileLayer);
       map.addLayer(satelliteTileLayer);
-      // Restore Satellite toggle content.
       satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
-      // Reset the Terrain toggle to its original content.
+      // Reset other base layers and overlays.
       terrainMode = false;
       terrainToggleButton.innerHTML = terrainToggleButton.dataset.original;
-      // Reset the States toggle to its original content.
       statesMode = false;
       statesToggleButton.innerHTML = statesToggleButton.dataset.original;
-      // Reset Heat Map toggle if active.
       if (heatMapMode) {
         removeHeatLayer(map);
         heatMapMode = false;
         heatMapToggleButton.innerHTML = heatMapToggleButton.dataset.original;
         map.addLayer(markerCluster);
       }
+      if (window.npBoundariesRef && npBoundariesRef.layer && map.hasLayer(npBoundariesRef.layer)) {
+        map.removeLayer(npBoundariesRef.layer);
+        npBoundariesToggleButton.innerHTML = npBoundariesToggleButton.dataset.original;
+        npBoundariesRef.layer = null;
+      }
+      if (window.nationalForestRef && nationalForestRef.layer && map.hasLayer(nationalForestRef.layer)) {
+        map.removeLayer(nationalForestRef.layer);
+        nationalForestToggleButton.innerHTML = nationalForestToggleButton.dataset.original;
+        nationalForestRef.layer = null;
+      }
     } else {
-      if (map.hasLayer(satelliteTileLayer)) map.removeLayer(satelliteTileLayer);
+      if (map.hasLayer(satelliteTileButton)) map.removeLayer(satelliteTileLayer);
       map.addLayer(defaultTileLayer);
-      // Restore Satellite toggle content.
       satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
     }
     setTimeout(() => { map.invalidateSize(); }, 200);
   });
-} catch (e) {
-  console.error("Error setting up Satellite toggle:", e);
-}
 
-// ----------------------------------------------------------------------
-// Terrain Toggle Event Listener
-// ----------------------------------------------------------------------
-const terrainToggleButton = document.getElementById("terrainToggleButton");
-// Ensure the Terrain button has its original content stored in a data attribute.
-if (!terrainToggleButton.dataset.original) {
-  terrainToggleButton.dataset.original = terrainToggleButton.innerHTML;
-}
+  // --------------------------
+  // Terrain Toggle Event Listener
+  // --------------------------
+  terrainToggleButton.addEventListener("click", function() {
+    terrainMode = !terrainMode;
+    if (terrainMode) {
+      if (map.hasLayer(defaultTileLayer)) map.removeLayer(defaultTileLayer);
+      if (map.hasLayer(satelliteTileLayer)) map.removeLayer(satelliteTileLayer);
+      map.addLayer(terrainTileLayer);
+      terrainToggleButton.innerHTML = terrainToggleButton.dataset.original;
+      if (satelliteToggleButton && satelliteToggleButton.dataset.original) {
+        satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
+      }
+      statesMode = false;
+      if (statesToggleButton && statesToggleButton.dataset.original) {
+        statesToggleButton.innerHTML = statesToggleButton.dataset.original;
+      }
+      if (heatMapMode) {
+        removeHeatLayer(map);
+        heatMapMode = false;
+        heatMapToggleButton.innerHTML = heatMapToggleButton.dataset.original;
+        map.addLayer(markerCluster);
+      }
+      if (window.npBoundariesRef && npBoundariesRef.layer && map.hasLayer(npBoundariesRef.layer)) {
+        map.removeLayer(npBoundariesRef.layer);
+        npBoundariesToggleButton.innerHTML = npBoundariesToggleButton.dataset.original;
+        npBoundariesRef.layer = null;
+      }
+      if (window.nationalForestRef && nationalForestRef.layer && map.hasLayer(nationalForestRef.layer)) {
+        map.removeLayer(nationalForestRef.layer);
+        nationalForestToggleButton.innerHTML = nationalForestToggleButton.dataset.original;
+        nationalForestRef.layer = null;
+      }
+    } else {
+      if (map.hasLayer(terrainTileLayer)) map.removeLayer(terrainTileLayer);
+      map.addLayer(defaultTileLayer);
+      terrainToggleButton.innerHTML = terrainToggleButton.dataset.original;
+      if (satelliteToggleButton && satelliteToggleButton.dataset.original) {
+        satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
+      }
+    }
+    setTimeout(() => { map.invalidateSize(); }, 200);
+  });
 
-terrainToggleButton.addEventListener("click", function() {
-  terrainMode = !terrainMode;
-  if (terrainMode) {
-    if (map.hasLayer(defaultTileLayer)) map.removeLayer(defaultTileLayer);
-    if (map.hasLayer(satelliteTileLayer)) map.removeLayer(satelliteTileLayer);
-    map.addLayer(terrainTileLayer);
-    // Restore Terrain button content.
-    terrainToggleButton.innerHTML = terrainToggleButton.dataset.original;
-    
-    // Reset Satellite toggle.
-    const satelliteToggleButton = document.getElementById("satelliteToggleButton");
-    if (satelliteToggleButton && satelliteToggleButton.dataset.original) {
-      satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
-    }
-    statesMode = false;
-    const statesToggleButton = document.getElementById("statesToggleButton");
-    if (statesToggleButton && statesToggleButton.dataset.original) {
-      statesToggleButton.innerHTML = statesToggleButton.dataset.original;
-    }
-    // Reset Heat Map toggle if active.
+  // --------------------------
+  // Heat Map Toggle Event Listener
+  // --------------------------
+  heatMapToggleButton.addEventListener("click", function() {
+    heatMapMode = !heatMapMode;
+    const span = heatMapToggleButton.querySelector("span");
     if (heatMapMode) {
+      if (map.hasLayer(markerCluster)) map.removeLayer(markerCluster);
+      updateHeatLayer(map, missingData);
+      if (span) {
+        span.textContent = "Remove Heat Map";
+      }
+    } else {
       removeHeatLayer(map);
-      heatMapMode = false;
-      heatMapToggleButton.innerHTML = heatMapToggleButton.dataset.original;
       map.addLayer(markerCluster);
+      heatMapToggleButton.innerHTML = heatMapToggleButton.dataset.original;
     }
-  } else {
-    if (map.hasLayer(terrainTileLayer)) map.removeLayer(terrainTileLayer);
-    map.addLayer(defaultTileLayer);
-    terrainToggleButton.innerHTML = terrainToggleButton.dataset.original;
-    if (satelliteToggleButton && satelliteToggleButton.dataset.original) {
-      satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
-    }
+    setTimeout(() => { map.invalidateSize(); }, 200);
+  });
+
+  // --------------------------
+  // National Forest Toggle Event Listener
+  // --------------------------
+  if (typeof nationalForestRef === "undefined") {
+    window.nationalForestRef = { layer: null };
   }
+  nationalForestToggleButton.addEventListener("click", function() {
+    toggleNationalForestBoundaries(map, nationalForestRef, this);
+    setTimeout(() => { map.invalidateSize(); }, 200);
+  });
+
+} catch (e) {
+  console.error("Error setting up toggles:", e);
+}
+
+// --------------------------
+// NP Boundaries Toggle Event Listener
+// --------------------------
+if (typeof npBoundariesRef === "undefined") {
+  window.npBoundariesRef = { layer: null };
+}
+document.getElementById("npBoundariesToggleButton").addEventListener("click", function() {
+  toggleNPBoundaries(map, npBoundariesRef, this);
   setTimeout(() => { map.invalidateSize(); }, 200);
 });
 
-document.getElementById("npBoundariesToggleButton").addEventListener("click", function() {
-  toggleNPBoundaries(map, npBoundariesRef, this);
-});
-
+// --------------------------
+// States Toggle Event Listener
+// --------------------------
+if (typeof stateLayerRef === "undefined") {
+  window.stateLayerRef = { layer: null };
+}
 document.getElementById("statesToggleButton").addEventListener("click", function() {
   toggleStates(map, stateLayerRef, this, missingData, addMarkers, buildPopupContent, showDetailView);
   setTimeout(() => { map.invalidateSize(); }, 200);
 });
 
-// ----------------------------------------------------------------------
-// Heat Map Toggle Event Listener
-// ----------------------------------------------------------------------
-const heatMapToggleButton = document.getElementById("heatMapToggleButton");
-// (The original markup for the Heat Map toggle has been set above.)
-
-heatMapToggleButton.addEventListener("click", function() {
-  heatMapMode = !heatMapMode;
-  const span = heatMapToggleButton.querySelector("span");
-  
-  if (heatMapMode) {
-    // Turn the heat map on.
-    if (map.hasLayer(markerCluster)) map.removeLayer(markerCluster);
-    updateHeatLayer(map, missingData);
-    // Update only the text within the <span> (keeping the icon).
-    if (span) {
-      span.textContent = "Heat Map";
-    }
+// --------------------------
+// Function to toggle National Forest Boundaries overlay
+// --------------------------
+function toggleNationalForestBoundaries(map, nfRef, button) {
+  if (nfRef.layer && map.hasLayer(nfRef.layer)) {
+    map.removeLayer(nfRef.layer);
+    button.innerHTML = button.dataset.original;
+    nfRef.layer = null;
   } else {
-    // Turn the heat map off: remove its layer, re-add the marker cluster, and restore full markup.
-    removeHeatLayer(map);
-    map.addLayer(markerCluster);
-    heatMapToggleButton.innerHTML = heatMapToggleButton.dataset.original;
+    if (nfRef.layer) {
+      map.addLayer(nfRef.layer);
+      // Instead of replacing the full markup, update only the label text.
+      const span = button.querySelector("span");
+      if (span) {
+        span.textContent = "Remove Natl. Forest";
+      }
+    } else {
+      fetch("https://themissinglist.com/data/National_Forest_Boundaries.geojson.gz")
+        .then(response => response.arrayBuffer())
+        .then(arrayBuffer => {
+          const decompressed = window.pako.ungzip(new Uint8Array(arrayBuffer), { to: 'string' });
+          const geojsonData = JSON.parse(decompressed);
+          const layer = L.geoJSON(geojsonData, {
+            style: feature => ({ color: "blue", weight: 2, fillOpacity: 0.1 }),
+            onEachFeature: function(feature, layer) {
+              if (feature.properties && feature.properties.unit_name) {
+                layer.bindPopup("<strong>" + feature.properties.unit_name + "</strong>");
+                layer.on('click', function(e) {
+                  L.DomEvent.stopPropagation(e);
+                  const bounds = layer.getBounds();
+                  if (bounds.isValid()) {
+                    map.fitBounds(bounds);
+                  }
+                  if (typeof window.showLocationDetailView === 'function') {
+                    window.showLocationDetailView(feature);
+                  }
+                });
+              }
+            }
+          });
+          map.addLayer(layer);
+          nfRef.layer = layer;
+          window.nationalForestData = geojsonData;
+          // Update only the label text while keeping the icon intact.
+          const span = button.querySelector("span");
+          if (span) {
+            span.textContent = "Remove Natl. Forest";
+          }
+        })
+        .catch(error => console.error("Error loading National Forest Boundaries GeoJSON:", error));
+    }
   }
-  setTimeout(() => { map.invalidateSize(); }, 200);
-});
+}
 
 // ----------------------------------------------------------------------
 // Playback controls.

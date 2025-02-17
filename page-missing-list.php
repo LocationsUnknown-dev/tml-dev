@@ -250,6 +250,10 @@ html, body {
   <img src="http://themissinglist.com/wp-content/uploads/2025/02/arches.png" alt="NP Boundaries Icon">
   <span>Natl. Parks</span>
 </button>
+  <button id="nationalForestToggleButton">
+  <img src="http://themissinglist.com/wp-content/uploads/2025/02/forest.png" alt="National Forest Icon">
+  <span>Natl. Forest</span>
+</button>
   <button id="statesToggleButton">
   <img src="http://themissinglist.com/wp-content/uploads/2025/02/map.png" alt="States Icon">
   <span>States</span>
