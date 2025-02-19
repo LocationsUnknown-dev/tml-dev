@@ -3,7 +3,6 @@
 import { trailsConfig, addParkTrailsToggleButton, removeParkTrailsToggleButton } from './trails.js';
 
 export function toggleNPBoundaries(map, npRef, button) {
-  // Debug: Log that the function was called and verify the button element.
   console.log("toggleNPBoundaries called", button);
   if (!button) {
     console.error("NP Boundaries toggle button not found.");
@@ -42,6 +41,7 @@ export function toggleNPBoundaries(map, npRef, button) {
         })
         .then(geojsonData => {
           const layer = L.geoJSON(geojsonData, {
+            npOverlay: true,  // Tag this layer as an NP overlay
             style: feature => ({ color: "#228B22", weight: 2, fillOpacity: 0.1 }),
             onEachFeature: function(feature, layer) {
               if (feature.properties && feature.properties.unit_name) {
@@ -52,10 +52,13 @@ export function toggleNPBoundaries(map, npRef, button) {
                   if (bounds.isValid()) {
                     map.fitBounds(bounds);
                   }
-                  if (typeof window.showLocationDetailView === 'function') {
-                    window.showLocationDetailView(feature);
-                  } else {
-                    console.warn("window.showLocationDetailView is not defined");
+                  // Only call showLocationDetailView if the overlay was not auto‑added.
+                  if (!window.autoNPOverlay) {
+                    if (typeof window.showLocationDetailView === 'function') {
+                      window.showLocationDetailView(feature);
+                    } else {
+                      console.warn("window.showLocationDetailView is not defined");
+                    }
                   }
                   const parkNameLower = feature.properties.unit_name.toLowerCase();
                   let matchedKey = null;
@@ -91,13 +94,75 @@ export function toggleNPBoundaries(map, npRef, button) {
   }
 }
 
+export function toggleNationalForestBoundaries(map, nfRef, button) {
+  console.log("toggleNationalForestBoundaries called", button);
+  if (!button) {
+    console.error("National Forest toggle button not found.");
+    return;
+  }
+  
+  // Initialize button's original content if not set.
+  if (!button.dataset.original) {
+    button.dataset.original = button.innerHTML;
+    console.log("Set button dataset.original:", button.dataset.original);
+  }
+  
+  if (nfRef.layer && map.hasLayer(nfRef.layer)) {
+    console.log("Removing National Forest overlay");
+    map.removeLayer(nfRef.layer);
+    button.innerHTML = button.dataset.original;
+    nfRef.layer = null;
+  } else {
+    if (nfRef.layer) {
+      console.log("Re-adding National Forest overlay");
+      map.addLayer(nfRef.layer);
+      button.innerHTML = button.dataset.original;
+    } else {
+      console.log("Fetching National Forest Boundaries GeoJSON");
+      fetch("https://themissinglist.com/data/National_Forest_Boundaries.geojson.gz")
+        .then(response => response.arrayBuffer())
+        .then(arrayBuffer => {
+          const decompressed = window.pako.ungzip(new Uint8Array(arrayBuffer), { to: 'string' });
+          const geojsonData = JSON.parse(decompressed);
+          const layer = L.geoJSON(geojsonData, {
+            nfOverlay: true,  // Tag this layer as an NF overlay
+            style: feature => ({ color: "blue", weight: 2, fillOpacity: 0.1 }),
+            onEachFeature: function(feature, layer) {
+              // Use FORESTNAME if available for display.
+              if (feature.properties && feature.properties.FORESTNAME) {
+                layer.bindPopup("<strong>" + feature.properties.FORESTNAME + "</strong>");
+                layer.on('click', function(e) {
+                  L.DomEvent.stopPropagation(e);
+                  const bounds = layer.getBounds();
+                  if (bounds.isValid()) {
+                    map.fitBounds(bounds);
+                  }
+                  if (typeof window.showLocationDetailView === 'function') {
+                    window.showLocationDetailView(feature);
+                  }
+                });
+              }
+            }
+          });
+          map.addLayer(layer);
+          nfRef.layer = layer;
+          window.nationalForestData = geojsonData;
+          button.innerHTML = button.dataset.original;
+          console.log("National Forest overlay added");
+        })
+        .catch(error => {
+          console.error("Error loading National Forest Boundaries GeoJSON:", error);
+        });
+    }
+  }
+}
+
 export function toggleStates(map, stateRef, button, missingData, addMarkersCallback, buildPopupContent, showDetailView) {
   if (!button) {
     console.error("States toggle button not found.");
     return;
   }
   
-  // Initialize the button's original content if not already set.
   if (!button.dataset.original) {
     button.dataset.original = button.innerHTML;
     console.log("Set states button dataset.original:", button.dataset.original);
@@ -106,7 +171,6 @@ export function toggleStates(map, stateRef, button, missingData, addMarkersCallb
   if (stateRef.layer && map.hasLayer(stateRef.layer)) {
     console.log("Removing States layer");
     map.removeLayer(stateRef.layer);
-    // Restore original button content.
     button.innerHTML = button.dataset.original;
     stateRef.layer = null;
   } else {
@@ -139,7 +203,6 @@ export function toggleStates(map, stateRef, button, missingData, addMarkersCallb
           });
           map.addLayer(layer);
           stateRef.layer = layer;
-          // Restore original button content.
           button.innerHTML = button.dataset.original;
           console.log("States layer added");
         })

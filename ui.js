@@ -2,53 +2,90 @@
 
 // Import trails configuration and data fetching functions.
 import { trailsConfig, fetchTrailsData, removeParkTrailsToggleButton } from './trails.js';
+window.showLocationDetailView = function(feature) {
+  console.warn("showLocationDetailView placeholder invoked.");
+};
+window.autoNPOverlay = false;
+window.autoNFOverlay = false;
 
 // -----------------------------
 // Spatial Filtering Helpers
 // -----------------------------
 
+// A helper to remove any NP and NF overlays.
+function clearOverlays() {
+  // Remove NP overlay if present.
+  if (window.npBoundariesRef && window.npBoundariesRef.layer && window.map.hasLayer(window.npBoundariesRef.layer)) {
+    window.map.removeLayer(window.npBoundariesRef.layer);
+    window.npBoundariesRef.layer = null;
+    const npBtn = document.getElementById("npBoundariesToggleButton");
+    if (npBtn && npBtn.dataset.original) {
+      npBtn.innerHTML = npBtn.dataset.original;
+    }
+  }
+  // Remove NF overlay if present.
+  if (window.nationalForestRef && window.nationalForestRef.layer && window.map.hasLayer(window.nationalForestRef.layer)) {
+    window.map.removeLayer(window.nationalForestRef.layer);
+    window.nationalForestRef.layer = null;
+    window.autoNFOverlay = false;
+    const nfBtn = document.getElementById("nationalForestToggleButton");
+    if (nfBtn && nfBtn.dataset.original) {
+      nfBtn.innerHTML = nfBtn.dataset.original;
+    }
+  }
+}
+
+// A helper to get a display name for a location feature.
+function getLocationName(feature) {
+  const props = feature.properties || {};
+  return (
+    props.unit_name ||
+    props.UNIT_NAME ||
+    props.FORESTNAME ||
+    props.name ||
+    props.NAME ||
+    "Unnamed Location"
+  ).trim();
+}
+
+// A helper to select a feature in an overlay.
+function selectOverlayFeature(overlayLayer, locationFeature) {
+  if (!overlayLayer) return;
+  const targetName = getLocationName(locationFeature).toLowerCase();
+  overlayLayer.eachLayer(function(layer) {
+    if (layer.feature && getLocationName(layer.feature).toLowerCase() === targetName) {
+      layer.openPopup();
+    }
+  });
+}
+
 /**
  * Check if two Leaflet bounds intersect.
- * @param {L.LatLngBounds} boundsA - The first bounds.
- * @param {L.LatLngBounds} boundsB - The second bounds.
- * @returns {boolean} - True if the bounds intersect.
  */
 function boundsIntersect(boundsA, boundsB) {
   return boundsA.intersects(boundsB);
 }
 
 /**
- * Given a GeoJSON feature, create a temporary Leaflet layer to determine its bounds.
- * @param {Object} feature - A GeoJSON feature.
- * @returns {L.LatLngBounds} - The calculated bounds of the feature.
+ * Given a GeoJSON feature, determine its bounds.
  */
 function getFeatureBounds(feature) {
   if (!feature.geometry) return L.latLngBounds([]);
-  
-  // Handle Point geometries.
   if (feature.geometry.type === 'Point') {
-    const coords = feature.geometry.coordinates; // [lng, lat]
+    const coords = feature.geometry.coordinates;
     const latlng = L.latLng(coords[1], coords[0]);
     return L.latLngBounds(latlng, latlng);
   }
-  
-  // Optionally, handle MultiPoint.
   if (feature.geometry.type === 'MultiPoint') {
     const latlngs = feature.geometry.coordinates.map(coord => L.latLng(coord[1], coord[0]));
     return L.latLngBounds(latlngs);
   }
-  
-  // For other geometry types, let Leaflet compute the bounds.
   const layer = L.geoJSON(feature);
   return layer.getBounds();
 }
 
 /**
  * Derives a park key from a unit name.
- * For example, if unitName contains "yosemite" (case-insensitive), returns "yosemite".
- * Modify this function as needed for your dataset.
- * @param {string} unitName 
- * @returns {string|null} - The park key, or null if none found.
  */
 function getParkKeyFromUnitName(unitName) {
   unitName = unitName.toLowerCase();
@@ -59,7 +96,7 @@ function getParkKeyFromUnitName(unitName) {
   if (unitName.includes("gates")) return "gates";
   if (unitName.includes("kobuk")) return "kobuk";
   if (unitName.includes("grand canyon")) return "grand canyon";
-    // Add additional conditions for other parks as needed.
+  if (unitName.includes("canyonlands")) return "canyonlands";
   return null;
 }
 
@@ -69,19 +106,10 @@ function getParkKeyFromUnitName(unitName) {
 let currentSortedTrails = [];
 let selectedTrailLayer = null;
 
-/**
- * Displays a single trail feature on the map.
- * Removes any previously added single trail layer and removes the general trails overlay.
- * Zooms the map to the bounds of the selected trail.
- * @param {Object} trailFeature - A GeoJSON feature for the trail.
- * @param {string} parkKey - The key for the park (if available).
- */
 function showSingleTrail(trailFeature, parkKey) {
-  // Remove any existing single trail layer.
   if (selectedTrailLayer && window.map.hasLayer(selectedTrailLayer)) {
     window.map.removeLayer(selectedTrailLayer);
   }
-  // Remove general trails overlay if present.
   if (parkKey) {
     removeParkTrailsToggleButton(window.map, parkKey);
   }
@@ -101,30 +129,22 @@ function showSingleTrail(trailFeature, parkKey) {
   });
   window.map.addLayer(selectedTrailLayer);
   
-  // Zoom to the bounds of the selected trail.
   const trailBounds = getFeatureBounds(trailFeature);
   if (trailBounds.isValid()) {
-    // If the feature is a point, use setView with a defined zoom level.
     if (trailBounds.getNorth() === trailBounds.getSouth() && trailBounds.getEast() === trailBounds.getWest()) {
-      window.map.setView(trailBounds.getCenter(), 14); // adjust zoom as needed
+      window.map.setView(trailBounds.getCenter(), 14);
     } else {
       window.map.fitBounds(trailBounds);
     }
   }
-  
-  // Automatically open the popup(s) for the added layer.
   selectedTrailLayer.eachLayer(function(layer) {
     layer.openPopup();
   });
 }
 
-// In ui.js (or a dedicated file), add:
-
 function updateGlobalTrailsCounter() {
   const parkKeys = Object.keys(trailsConfig);
   let totalTrailsCount = 0;
-  
-  // Create an array of promises, one for each park's trails data.
   const promises = parkKeys.map(key => {
     return fetchTrailsData(key)
       .then(data => {
@@ -136,30 +156,17 @@ function updateGlobalTrailsCounter() {
         console.error(`Error fetching trails for ${key}:`, error);
       });
   });
-  
-  // Once all fetches are done, update the counter.
   Promise.all(promises).then(() => {
     const counterElem = document.getElementById('trailsTotal');
     if (counterElem) {
-      // Format the number with commas (e.g., 1,000)
       counterElem.textContent = totalTrailsCount.toLocaleString();
     }
   });
 }
-
-// Call this function on initialization (or whenever appropriate)
 updateGlobalTrailsCounter();
 
-/**
- * Updates the trails list in the detail view.
- * Applies sorting and additional filtering based on the sort dropdown and filter checkboxes.
- * @param {Array} trails - Array of matching GeoJSON trail features.
- * @param {string} parkKey - The park key for which trails are being processed.
- */
 function updateTrailsList(trails, parkKey) {
   const sortValue = document.getElementById("trailsSort").value;
-  
-  // Get selected filter checkboxes.
   const filterCheckboxes = document.querySelectorAll(".trailsFilterCheckbox");
   const selectedFilters = [];
   filterCheckboxes.forEach(cb => {
@@ -167,8 +174,6 @@ function updateTrailsList(trails, parkKey) {
       selectedFilters.push(cb.value);
     }
   });
-  
-  // Apply additional filtering.
   let filteredTrails = trails;
   if (selectedFilters.length > 0) {
     filteredTrails = trails.filter(feature => {
@@ -178,9 +183,7 @@ function updateTrailsList(trails, parkKey) {
       });
     });
   }
-  
-  // Apply sorting.
-  let sortedTrails = [...filteredTrails]; // shallow copy
+  let sortedTrails = [...filteredTrails];
   if (sortValue === "name-asc") {
     sortedTrails.sort((a, b) => (a.properties.name || "").localeCompare(b.properties.name || ""));
   } else if (sortValue === "name-desc") {
@@ -190,8 +193,6 @@ function updateTrailsList(trails, parkKey) {
   } else if (sortValue === "length-desc") {
     sortedTrails.sort((a, b) => parseFloat(b.properties.length || 0) - parseFloat(a.properties.length || 0));
   }
-  
-  // Exclude any trail whose name (or default "Unnamed Trail") includes "unnamed"
   sortedTrails = sortedTrails.filter(feature => {
     let name = feature.properties.name;
     if (!name) {
@@ -199,16 +200,17 @@ function updateTrailsList(trails, parkKey) {
     }
     return !name.toLowerCase().includes("unnamed");
   });
-  
-  // Update the Trails & POI Mapped counter.
-// **Important: Update the global variable so the click handler can access the correct feature.**
+  if (document.getElementById("trailsTotal")) {
+    document.getElementById("trailsTotal").textContent = sortedTrails.length;
+  }
   currentSortedTrails = sortedTrails;
-
-  // Build the HTML list.
   const trailsListEl = document.getElementById("trailsDataList");
   trailsListEl.innerHTML = sortedTrails
     .map((feature, index) => {
-      let name = feature.properties.name || "Unnamed Trail";
+      let name = feature.properties.name;
+      if (!name) {
+        name = "Unnamed Trail";
+      }
       const length = feature.properties.length ? ` (Length: ${feature.properties.length})` : "";
       const route = feature.properties.route ? ` Route: ${feature.properties.route}` : "";
       const type = feature.properties.type ? ` Type: ${feature.properties.type}` : "";
@@ -218,12 +220,9 @@ function updateTrailsList(trails, parkKey) {
       return `<li data-index="${index}" style="cursor:pointer;">${name}${length}${route}${type}${natural}${amenity}${tourism}</li>`;
     })
     .join("");
-  
-  // Attach click events to each trail list item.
   document.querySelectorAll("#trailsDataList li").forEach(li => {
     li.addEventListener("click", function() {
       const index = parseInt(this.getAttribute("data-index"), 10);
-      console.log("Clicked trail index:", index, currentSortedTrails[index]); // Debug logging
       showSingleTrail(currentSortedTrails[index], parkKey);
     });
   });
@@ -232,24 +231,10 @@ function updateTrailsList(trails, parkKey) {
 // -----------------------------
 // UI Setup Functions (Locations & Cases)
 // -----------------------------
-
-/**
- * Initialize the UI.
- * Preloads NP boundaries data and sets up info panel toggling.
- * @param {Function} updateMapForFilters - Callback to update the map.
- * @param {Function} populateCaseList - Callback to populate the case list.
- */
-export function setupUI(updateMapForFilters, populateCaseList) {
-  loadNPBoundariesData().catch(err => console.error("Error preloading NP boundaries:", err));
-  setupInfoPanelToggle();
-}
-
 function setupInfoPanelToggle() {
   const switchToLocationsBtn = document.getElementById("switchToLocations");
   const switchToCasesBtn = document.getElementById("switchToCases");
   const locationControls = document.getElementById("locationControls");
-
-  // When switching to Locations:
   switchToLocationsBtn.addEventListener("click", async () => {
     document.querySelector("#infoHeader h2").textContent = "Location List";
     switchToLocationsBtn.style.display = "none";
@@ -258,8 +243,6 @@ function setupInfoPanelToggle() {
     document.getElementById("infoContent").innerHTML = "";
     await renderLocationList();
   });
-
-  // When switching to Cases:
   switchToCasesBtn.addEventListener("click", () => {
     document.querySelector("#infoHeader h2").textContent = "Case List";
     switchToCasesBtn.style.display = "none";
@@ -268,86 +251,74 @@ function setupInfoPanelToggle() {
     document.getElementById("infoContent").innerHTML = "";
     renderCaseList();
   });
-
-  // Setup event listeners for location search and sorting.
   document.getElementById("locationSearch").addEventListener("input", renderLocationList);
   document.getElementById("locationSort").addEventListener("change", renderLocationList);
 }
 
-async function loadNPBoundariesData() {
+async function loadLocationBoundariesData() {
   try {
-    const response = await fetch("https://themissinglist.com/data/US_National_Parks.geojson");
-    const data = await response.json();
-    if (data && data.features && data.features.length > 0) {
-      window.nationalParksData = data;
-      return true;
-    } else {
-      console.error("NP boundaries data is empty.");
-      return false;
-    }
+    const npResponse = await fetch("https://themissinglist.com/data/US_National_Parks.geojson");
+    const npData = await npResponse.json();
+    const nfResponse = await fetch("https://themissinglist.com/data/National_Forest_Boundaries.geojson.gz");
+    const nfArrayBuffer = await nfResponse.arrayBuffer();
+    const nfDecompressed = window.pako.ungzip(new Uint8Array(nfArrayBuffer), { to: 'string' });
+    const nfData = JSON.parse(nfDecompressed);
+    const combinedFeatures = [
+      ...(npData.features || []),
+      ...(nfData.features || [])
+    ];
+    const combinedData = { ...npData, features: combinedFeatures };
+    window.locationBoundariesData = combinedData;
+    return true;
   } catch (error) {
-    console.error("Error loading NP boundaries data:", error);
+    console.error("Error loading location boundaries data:", error);
     return false;
   }
 }
 
 async function renderLocationList() {
   const listContainer = document.getElementById("infoContent");
-
-  // Ensure NP boundaries data is loaded.
   if (
-    !window.nationalParksData ||
-    !window.nationalParksData.features ||
-    window.nationalParksData.features.length === 0
+    !window.locationBoundariesData ||
+    !window.locationBoundariesData.features ||
+    window.locationBoundariesData.features.length === 0
   ) {
     listContainer.innerHTML = "<p>Location data is loading. Please wait...</p>";
-    const success = await loadNPBoundariesData();
+    const success = await loadLocationBoundariesData();
     if (!success) {
       listContainer.innerHTML = "<p>Error loading location data.</p>";
       return;
     }
   }
-
-  // Filter out features that lack valid geometry.
-  let locations = window.nationalParksData.features.slice().filter(feature => feature.geometry);
-
-  // Retrieve search and sort values.
+  let locations = window.locationBoundariesData.features.slice().filter(feature => feature.geometry);
   const searchValue = document.getElementById("locationSearch").value.trim().toLowerCase();
   const sortOption = document.getElementById("locationSort").value;
-
   if (searchValue) {
     locations = locations.filter(feature =>
-      feature.properties.unit_name.toLowerCase().includes(searchValue)
+      getLocationName(feature).toLowerCase().includes(searchValue)
     );
   }
-
-  // Sort locations.
   locations.sort((a, b) => {
-    const nameA = a.properties.unit_name.toLowerCase();
-    const nameB = b.properties.unit_name.toLowerCase();
+    const nameA = getLocationName(a).toLowerCase();
+    const nameB = getLocationName(b).toLowerCase();
     if (sortOption === "az") return nameA.localeCompare(nameB);
     if (sortOption === "za") return nameB.localeCompare(nameA);
     if (sortOption === "largest") return (b.properties.area || 0) - (a.properties.area || 0);
     if (sortOption === "smallest") return (a.properties.area || 0) - (b.properties.area || 0);
     return 0;
   });
-
-  // Remove duplicate locations by unit_name.
   const uniqueLocationsMap = {};
   locations.forEach(feature => {
-    const name = feature.properties.unit_name;
-    if (!uniqueLocationsMap[name]) {
-      uniqueLocationsMap[name] = feature;
+    const locName = getLocationName(feature);
+    if (!uniqueLocationsMap[locName]) {
+      uniqueLocationsMap[locName] = feature;
     }
   });
-  // Removed the .slice(0, 20) call to display all unique locations.
   const uniqueLocations = Object.values(uniqueLocationsMap);
-
-  // Build the list HTML.
   let listHTML = "<ul style='list-style: none; padding: 0; margin: 0;'>";
   uniqueLocations.forEach((feature, idx) => {
     try {
-      const parkName = feature.properties.unit_name;
+      const displayName = getLocationName(feature);
       const tempLayer = L.geoJSON(feature);
       const bounds = tempLayer.getBounds();
       if (bounds && typeof bounds.getWest === "function") {
@@ -359,7 +330,7 @@ async function renderLocationList() {
           const bboxArray = [west, south, east, north];
           listHTML += `<li style="margin-bottom: 5px;">
                          <a href="#" class="locationLink" data-index="${idx}" data-bounds='${JSON.stringify(bboxArray)}' style="color: #0073aa; text-decoration: none;">
-                           ${parkName}
+                           ${displayName}
                          </a>
                        </li>`;
         }
@@ -373,10 +344,6 @@ async function renderLocationList() {
   document.querySelectorAll(".locationLink").forEach(link => {
     link.addEventListener("click", function (e) {
       e.preventDefault();
-      const npToggle = document.getElementById("npBoundariesToggleButton");
-      if (npToggle && npToggle.innerHTML.trim() !== "Remove NP Boundaries") {
-        npToggle.click();
-      }
       const idx = parseInt(this.getAttribute("data-index"), 10);
       const feature = uniqueLocations[idx];
       const bboxArray = JSON.parse(this.getAttribute("data-bounds"));
@@ -396,9 +363,10 @@ async function renderLocationList() {
 
 function showLocationDetailView(locationFeature) {
   const infoContent = document.getElementById("infoContent");
+  clearOverlays();
   let html = `
-    <button id="backToLocationList">Back to List</button>
-    <h3>${locationFeature.properties.unit_name}</h3>
+    <button id="backToLocationList" style="margin-bottom: 10px;">Back to List</button>
+    <h3>${getLocationName(locationFeature)}</h3>
   `;
   if (locationFeature.properties.area) {
     html += `<p>Area: ${locationFeature.properties.area}</p>`;
@@ -406,31 +374,93 @@ function showLocationDetailView(locationFeature) {
   if (locationFeature.properties.description) {
     html += `<p>${locationFeature.properties.description}</p>`;
   }
-  html += `<div id="trailsList">
-             <h4>Trails Data Points</h4>
-             <label for="trailsSort">Sort By: </label>
-             <select id="trailsSort">
-               <option value="name-asc">Name A–Z</option>
-               <option value="name-desc">Name Z–A</option>
-               <option value="length-asc">Length (Low to High)</option>
-               <option value="length-desc">Length (High to Low)</option>
-             </select>
-             <div id="trailsFilters" style="margin-top: 5px;">
-               <label><input type="checkbox" class="trailsFilterCheckbox" value="route"> Route</label>
-               <label><input type="checkbox" class="trailsFilterCheckbox" value="type"> Type</label>
-               <label><input type="checkbox" class="trailsFilterCheckbox" value="natural"> Natural</label>
-               <label><input type="checkbox" class="trailsFilterCheckbox" value="amenity"> Amenity</label>
-               <label><input type="checkbox" class="trailsFilterCheckbox" value="tourism"> Tourism</label>
-             </div>
-             <ul id="trailsDataList"></ul>
-           </div>`;
+  html += `
+    <div id="trailsList">
+      <h4>Trails Data Points</h4>
+      <label for="trailsSort">Sort By: </label>
+      <select id="trailsSort">
+        <option value="name-asc">Name A–Z</option>
+        <option value="name-desc">Name Z–A</option>
+        <option value="length-asc">Length (Low to High)</option>
+        <option value="length-desc">Length (High to Low)</option>
+      </select>
+      <div id="trailsFilters" style="margin-top: 5px;">
+        <label><input type="checkbox" class="trailsFilterCheckbox" value="route"> Route</label>
+        <label><input type="checkbox" class="trailsFilterCheckbox" value="type"> Type</label>
+        <label><input type="checkbox" class="trailsFilterCheckbox" value="natural"> Natural</label>
+        <label><input type="checkbox" class="trailsFilterCheckbox" value="amenity"> Amenity</label>
+        <label><input type="checkbox" class="trailsFilterCheckbox" value="tourism"> Tourism</label>
+      </div>
+      <ul id="trailsDataList"></ul>
+    </div>
+  `;
   infoContent.innerHTML = html;
-  document.getElementById("backToLocationList").addEventListener("click", () => {
-    if (window.map) {
-      window.map.setView([39.8283, -98.5795], 4);
+  
+  // Auto-add the appropriate overlay.
+  if (locationFeature.properties.FORESTNAME) {
+    const nfToggle = document.getElementById("nationalForestToggleButton");
+    nfToggle.click();
+    window.autoNFOverlay = true;
+    setTimeout(() => {
+      selectOverlayFeature(window.nationalForestRef.layer, locationFeature);
+    }, 500);
+  } else {
+    const npToggle = document.getElementById("npBoundariesToggleButton");
+    npToggle.click();
+    window.autoNPOverlay = true;
+    setTimeout(() => {
+      selectOverlayFeature(window.npBoundariesRef.layer, locationFeature);
+    }, 500);
+  }
+  
+  if (locationFeature && locationFeature.geometry) {
+    const bounds = L.geoJSON(locationFeature).getBounds();
+    if (bounds.isValid()) {
+      window.map.fitBounds(bounds);
     }
-    renderLocationList();
+  }
+  
+  document.getElementById("backToLocationList").addEventListener("click", () => {
+  // Reset map view.
+  window.map.setView([39.8283, -98.5795], 4);
+  
+  // Remove the NF overlay from our global reference, if present.
+  if (window.nationalForestRef && window.nationalForestRef.layer && window.map.hasLayer(window.nationalForestRef.layer)) {
+    window.map.removeLayer(window.nationalForestRef.layer);
+    window.nationalForestRef.layer = null;
+    const nfBtn = document.getElementById("nationalForestToggleButton");
+    if (nfBtn && nfBtn.dataset.original) {
+      nfBtn.innerHTML = nfBtn.dataset.original;
+    }
+  }
+  
+  // Additionally, iterate over all layers on the map and remove any layer that is tagged as an NF overlay.
+  window.map.eachLayer(layer => {
+    if (layer.options && layer.options.nfOverlay) {
+      window.map.removeLayer(layer);
+    }
   });
+  
+  // Also remove the NP overlay in the same way.
+  if (window.npBoundariesRef && window.npBoundariesRef.layer && window.map.hasLayer(window.npBoundariesRef.layer)) {
+    window.map.removeLayer(window.npBoundariesRef.layer);
+    window.npBoundariesRef.layer = null;
+    const npBtn = document.getElementById("npBoundariesToggleButton");
+    if (npBtn && npBtn.dataset.original) {
+      npBtn.innerHTML = npBtn.dataset.original;
+    }
+  }
+  window.map.eachLayer(layer => {
+    if (layer.options && layer.options.npOverlay) {
+      window.map.removeLayer(layer);
+    }
+  });
+  
+  // Clear any search input and re-render the location list.
+  document.getElementById("locationSearch").value = "";
+  renderLocationList();
+});
+  
   const parkKey = getParkKeyFromUnitName(locationFeature.properties.unit_name);
   if (parkKey && trailsConfig[parkKey]) {
     fetchTrailsData(parkKey)
@@ -466,6 +496,7 @@ function showLocationDetailView(locationFeature) {
   } else {
     document.getElementById("trailsDataList").innerHTML = "";
   }
+  
   if (locationFeature && locationFeature.geometry) {
     const bounds = L.geoJSON(locationFeature).getBounds();
     if (bounds.isValid()) {
@@ -474,7 +505,6 @@ function showLocationDetailView(locationFeature) {
   }
 }
 
-// Make sure it’s available globally:
 window.showLocationDetailView = showLocationDetailView;
 
 function renderCaseList() {
@@ -485,4 +515,10 @@ function renderCaseList() {
   }
 }
 
-export { renderLocationList, renderCaseList };
+function setupUI(updateMapForFilters, populateCaseList) {
+  loadLocationBoundariesData().catch(err => console.error("Error preloading location boundaries:", err));
+  setupInfoPanelToggle();
+}
+
+export { setupUI, renderLocationList, renderCaseList };
+
