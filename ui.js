@@ -520,5 +520,6 @@ function setupUI(updateMapForFilters, populateCaseList) {
   setupInfoPanelToggle();
 }
 
-export { setupUI, renderLocationList, renderCaseList };
+export { setupUI, renderLocationList, renderCaseList, loadLocationBoundariesData };
+
 

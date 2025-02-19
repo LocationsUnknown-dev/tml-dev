@@ -3,8 +3,8 @@
 import { loadDataFromAPI } from './api.js';
 import { initMap } from './map.js';
 import { addMarkers, updateHeatLayer, removeHeatLayer } from './markers.js';
-import { setupUI } from './ui.js';
 import { toggleNPBoundaries, toggleStates } from './boundaries.js';
+import { setupUI, loadLocationBoundariesData } from './ui.js';
 
 let missingData = [];
 window.globalMaxDate = 0;
@@ -65,6 +65,29 @@ export function buildPopupContent(item) {
   </dl>
 </div>
 `;
+}
+
+function updateLocationCounter() {
+  const boundariesData = window.locationBoundariesData || window.nationalParksData;
+  if (boundariesData && boundariesData.features) {
+    const uniqueLocations = {};
+    boundariesData.features.forEach(feature => {
+      if (feature.properties) {
+        let locationName = "";
+        if (feature.properties.unit_name && feature.properties.unit_name.trim()) {
+          locationName = feature.properties.unit_name.trim();
+        } else if (feature.properties.FORESTNAME && feature.properties.FORESTNAME.trim()) {
+          locationName = feature.properties.FORESTNAME.trim();
+        }
+        if (locationName !== "") {
+          uniqueLocations[locationName] = true;
+        }
+      }
+    });
+    document.getElementById("locationsTotal").textContent = Object.keys(uniqueLocations).length;
+  } else {
+    document.getElementById("locationsTotal").textContent = 0;
+  }
 }
 
 function showDetailView(item) {
@@ -204,21 +227,30 @@ function updateMapForFilters() {
       map.fitBounds(tempLayer.getBounds());
     }
   }
-  
-  // Count only unique locations by their unit_name.
-  if (window.nationalParksData && window.nationalParksData.features) {
-    const uniqueLocations = {};
-    window.nationalParksData.features.forEach(feature => {
-      if (feature.properties && feature.properties.unit_name) {
-        uniqueLocations[feature.properties.unit_name] = true;
+} 
+// Count unique locations from both National Parks and National Forests.
+const boundariesData = window.locationBoundariesData || window.nationalParksData;
+if (boundariesData && boundariesData.features) {
+  const uniqueLocations = {};
+  boundariesData.features.forEach(feature => {
+    if (feature.properties) {
+      // Use 'unit_name' for parks or 'FORESTNAME' for forests.
+      let locationName = "";
+      if (feature.properties.unit_name && feature.properties.unit_name.trim()) {
+        locationName = feature.properties.unit_name.trim();
+      } else if (feature.properties.FORESTNAME && feature.properties.FORESTNAME.trim()) {
+        locationName = feature.properties.FORESTNAME.trim();
       }
-    });
-    const uniqueCount = Object.keys(uniqueLocations).length;
-    document.getElementById("locationsTotal").textContent = uniqueCount;
-  } else {
-    document.getElementById("locationsTotal").textContent = 0;
-  }
+      if (locationName !== "") {
+        uniqueLocations[locationName] = true;
+      }
+    }
+  });
+  document.getElementById("locationsTotal").textContent = Object.keys(uniqueLocations).length;
+} else {
+  document.getElementById("locationsTotal").textContent = 0;
 }
+
 
 // ----------------------------------------------------------------------
 // Map Initialization and Global Setup
@@ -244,8 +276,10 @@ async function loadNPBoundariesData() {
 setupUI(updateMapForFilters, populateNamesList);
 async function initializeData() {
   try {
-    // Preload NP boundaries data
+    // Preload NP boundaries data (for other parts of your app)
     await loadNPBoundariesData();
+    // Preload combined NP and NF boundaries data
+    await loadLocationBoundariesData();
     missingData = await loadDataFromAPI();
     missingData.sort((a, b) => Date.parse(a.date_missing) - Date.parse(b.date_missing));
     let minDate = Infinity;
@@ -263,6 +297,7 @@ async function initializeData() {
     document.getElementById("dateValue").textContent = new Date(maxDate).toLocaleDateString();
     updateMapForFilters();
     populateNamesList();
+    updateLocationCounter();  // Update the counter now that the boundaries are loaded
   } catch (error) {
     console.error("Error loading data:", error);
     displayError("There was an error loading the map data. Please refresh the page and try again.");
