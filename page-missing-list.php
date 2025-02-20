@@ -242,7 +242,7 @@ html, body {
   </div>
   <div id="layersToggleContent">
   <button id="terrainToggleButton">
-    <img src="http://themissinglist.com/wp-content/uploads/2025/02/terrain.png" alt="Terrain Icon">
+    <img src="http://themissinglist.com/wp-content/uploads/2025/02/topographic.png" alt="Terrain Icon">
     <span>Terrain</span>
   </button>
   <button id="satelliteToggleButton">Satellite</button>
@@ -261,6 +261,10 @@ html, body {
   <button id="heatMapToggleButton">
   <img src="http://themissinglist.com/wp-content/uploads/2025/02/heat-map.png" alt="Heat Map Icon">
   <span>Heat Map</span>
+</button>
+<button id="trailsToggleButton" style="display:none;">
+  <img src="http://themissinglist.com/wp-content/uploads/2025/02/mountaineer.png" alt="Trails Icon">
+  <span>Trails</span>
 </button>
 </div>
 

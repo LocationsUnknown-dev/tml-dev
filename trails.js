@@ -23,6 +23,9 @@ export const trailsConfig = {
   "grand canyon": {
     url: "https://themissinglist.com/data/nps/grand-canyon_np.geojson.gz"
   },
+  "canyonlands": {
+    url: "https://themissinglist.com/data/nps/canyonlands_np.geojson.gz"
+  },
 
   // Add more parks as needed...
 };

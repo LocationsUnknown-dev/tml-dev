@@ -69,11 +69,18 @@ export function toggleNPBoundaries(map, npRef, button) {
                     }
                   }
                   if (matchedKey) {
-                    addParkTrailsToggleButton(map, matchedKey);
+                   window.currentParkKey = matchedKey;
+                   const trailsBtn = document.getElementById("trailsToggleButton");
+                   if (trailsBtn) {
+                    trailsBtn.style.display = "block"; // show the button
+                    trailsBtn.classList.remove("active-toggle"); // reset any active state
+                   }
                   } else {
-                    Object.keys(trailsConfig).forEach(key => {
-                      removeParkTrailsToggleButton(map, key);
-                    });
+                   window.currentParkKey = null;
+                   const trailsBtn = document.getElementById("trailsToggleButton");
+                   if (trailsBtn) {
+                    trailsBtn.style.display = "none"; // hide if no matching park
+                   }
                   }
                 });
               }

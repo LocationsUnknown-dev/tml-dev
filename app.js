@@ -5,6 +5,7 @@ import { initMap } from './map.js';
 import { addMarkers, updateHeatLayer, removeHeatLayer } from './markers.js';
 import { toggleNPBoundaries, toggleStates } from './boundaries.js';
 import { setupUI, loadLocationBoundariesData } from './ui.js';
+import { toggleParkTrails } from './trails.js';
 
 let missingData = [];
 window.globalMaxDate = 0;
@@ -258,6 +259,18 @@ if (boundariesData && boundariesData.features) {
 const { map, defaultTileLayer, terrainTileLayer, satelliteTileLayer, markerCluster } = initMap();
 window.map = map; // Expose globally
 window.populateNamesList = populateNamesList;
+
+const trailsToggleButton = document.getElementById("trailsToggleButton");
+if (trailsToggleButton) {
+  trailsToggleButton.addEventListener("click", function() {
+    if (window.currentParkKey) {
+      toggleParkTrails(map, window.currentParkKey);
+      // Optionally, toggle an "active" style to indicate the overlay is on/off.
+      trailsToggleButton.classList.toggle("active-toggle");
+    }
+  });
+}
+
 
 // Preload NP Boundaries (for Location List)
 async function loadNPBoundariesData() {
