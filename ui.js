@@ -49,14 +49,28 @@ function getLocationName(feature) {
 }
 
 // A helper to select a feature in an overlay.
-function selectOverlayFeature(overlayLayer, locationFeature) {
-  if (!overlayLayer) return;
-  const targetName = getLocationName(locationFeature).toLowerCase();
-  overlayLayer.eachLayer(function(layer) {
-    if (layer.feature && getLocationName(layer.feature).toLowerCase() === targetName) {
-      layer.openPopup();
+function autoClickOverlayFeature(overlayLayer, locationFeature) {
+  if (!overlayLayer) {
+    console.warn("Overlay layer is not available yet.");
+    return;
+  }
+  const targetName = getLocationName(locationFeature).toLowerCase().trim();
+  let found = false;
+  overlayLayer.eachLayer(layer => {
+    if (layer.feature) {
+      const layerName = getLocationName(layer.feature).toLowerCase().trim();
+      console.log("Comparing overlay feature:", layerName, "with target:", targetName);
+      // Check if one name contains the other
+      if (layerName.indexOf(targetName) !== -1 || targetName.indexOf(layerName) !== -1) {
+        console.log("Found matching overlay feature:", layerName, ". Firing click.");
+        layer.fire("click");
+        found = true;
+      }
     }
   });
+  if (!found) {
+    console.warn("No matching overlay feature found for target:", targetName);
+  }
 }
 
 /**
@@ -92,7 +106,7 @@ function getParkKeyFromUnitName(unitName) {
   if (unitName.includes("yosemite")) return "yosemite";
   if (unitName.includes("yellowstone")) return "yellowstone";
   if (unitName.includes("zion")) return "zion";
-  if (unitName.includes("denali")) return "denail";
+  if (unitName.includes("denali")) return "denali";
   if (unitName.includes("gates")) return "gates";
   if (unitName.includes("kobuk")) return "kobuk";
   if (unitName.includes("grand canyon")) return "grand canyon";
@@ -356,12 +370,13 @@ async function renderLocationList() {
           window.map.fitBounds(bounds);
         }
       }
-      showLocationDetailView(feature);
+      // Pass true to indicate that this came from the list.
+      showLocationDetailView(feature, true);
     });
   });
 }
 
-function showLocationDetailView(locationFeature) {
+function showLocationDetailView(locationFeature, autoClick = false) {
   const infoContent = document.getElementById("infoContent");
   clearOverlays();
   let html = `
@@ -398,21 +413,31 @@ function showLocationDetailView(locationFeature) {
   
   // Auto-add the appropriate overlay.
   if (locationFeature.properties.FORESTNAME) {
-    const nfToggle = document.getElementById("nationalForestToggleButton");
-    nfToggle.click();
-    window.autoNFOverlay = true;
-    setTimeout(() => {
-      selectOverlayFeature(window.nationalForestRef.layer, locationFeature);
-    }, 500);
-  } else {
-    const npToggle = document.getElementById("npBoundariesToggleButton");
-    npToggle.click();
-    window.autoNPOverlay = true;
-    setTimeout(() => {
-      selectOverlayFeature(window.npBoundariesRef.layer, locationFeature);
-    }, 500);
-  }
+  const nfToggle = document.getElementById("nationalForestToggleButton");
+  nfToggle.click();
+  window.autoNFOverlay = true;
+  const nfInterval = setInterval(() => {
+    if (window.nationalForestRef && window.nationalForestRef.layer) {
+      console.log("National Forest overlay loaded. Attempting auto-click.");
+      autoClickOverlayFeature(window.nationalForestRef.layer, locationFeature);
+      clearInterval(nfInterval);
+    }
+  }, 500);
+ } else {
+  const npToggle = document.getElementById("npBoundariesToggleButton");
+  npToggle.click();
+  window.autoNPOverlay = true;
+  const npInterval = setInterval(() => {
+    if (window.npBoundariesRef && window.npBoundariesRef.layer) {
+      console.log("National Parks overlay loaded. Attempting auto-click.");
+      autoClickOverlayFeature(window.npBoundariesRef.layer, locationFeature);
+      clearInterval(npInterval);
+    }
+  }, 500);
+ }
+
   
+  // Zoom into the location.
   if (locationFeature && locationFeature.geometry) {
     const bounds = L.geoJSON(locationFeature).getBounds();
     if (bounds.isValid()) {
@@ -420,47 +445,67 @@ function showLocationDetailView(locationFeature) {
     }
   }
   
+  // "Back to List" handler.
   document.getElementById("backToLocationList").addEventListener("click", () => {
-  // Reset map view.
-  window.map.setView([39.8283, -98.5795], 4);
-  
-  // Remove the NF overlay from our global reference, if present.
-  if (window.nationalForestRef && window.nationalForestRef.layer && window.map.hasLayer(window.nationalForestRef.layer)) {
-    window.map.removeLayer(window.nationalForestRef.layer);
-    window.nationalForestRef.layer = null;
-    const nfBtn = document.getElementById("nationalForestToggleButton");
-    if (nfBtn && nfBtn.dataset.original) {
-      nfBtn.innerHTML = nfBtn.dataset.original;
+    // Reset map view.
+    window.map.setView([39.8283, -98.5795], 4);
+    
+    // Remove overlays.
+    if (window.nationalForestRef && window.nationalForestRef.layer && window.map.hasLayer(window.nationalForestRef.layer)) {
+      window.map.removeLayer(window.nationalForestRef.layer);
+      window.nationalForestRef.layer = null;
+      const nfBtn = document.getElementById("nationalForestToggleButton");
+      if (nfBtn && nfBtn.dataset.original) {
+        nfBtn.innerHTML = nfBtn.dataset.original;
+      }
     }
-  }
-  
-  // Additionally, iterate over all layers on the map and remove any layer that is tagged as an NF overlay.
-  window.map.eachLayer(layer => {
-    if (layer.options && layer.options.nfOverlay) {
-      window.map.removeLayer(layer);
+    window.map.eachLayer(layer => {
+      if (layer.options && layer.options.nfOverlay) {
+        window.map.removeLayer(layer);
+      }
+    });
+    if (window.npBoundariesRef && window.npBoundariesRef.layer && window.map.hasLayer(window.npBoundariesRef.layer)) {
+      window.map.removeLayer(window.npBoundariesRef.layer);
+      window.npBoundariesRef.layer = null;
+      const npBtn = document.getElementById("npBoundariesToggleButton");
+      if (npBtn && npBtn.dataset.original) {
+        npBtn.innerHTML = npBtn.dataset.original;
+      }
     }
+    window.map.eachLayer(layer => {
+      if (layer.options && layer.options.npOverlay) {
+        window.map.removeLayer(layer);
+      }
+    });
+    
+    // Close any open popup on the overlay feature.
+    if (locationFeature.properties.FORESTNAME && window.nationalForestRef && window.nationalForestRef.layer) {
+      window.nationalForestRef.layer.eachLayer(layer => {
+        if (layer.feature && getLocationName(layer.feature).toLowerCase() === getLocationName(locationFeature).toLowerCase()) {
+          layer.closePopup();
+        }
+      });
+    } else if (window.npBoundariesRef && window.npBoundariesRef.layer) {
+      window.npBoundariesRef.layer.eachLayer(layer => {
+        if (layer.feature && getLocationName(layer.feature).toLowerCase() === getLocationName(locationFeature).toLowerCase()) {
+          layer.closePopup();
+        }
+      });
+    }
+    
+    // Hide the Trails toggle and clear current park key.
+    const trailsBtn = document.getElementById("trailsToggleButton");
+    if (trailsBtn) {
+      trailsBtn.style.display = "none";
+    }
+    window.currentParkKey = null;
+    
+    // Clear search input and re-render the location list.
+    document.getElementById("locationSearch").value = "";
+    renderLocationList();
   });
   
-  // Also remove the NP overlay in the same way.
-  if (window.npBoundariesRef && window.npBoundariesRef.layer && window.map.hasLayer(window.npBoundariesRef.layer)) {
-    window.map.removeLayer(window.npBoundariesRef.layer);
-    window.npBoundariesRef.layer = null;
-    const npBtn = document.getElementById("npBoundariesToggleButton");
-    if (npBtn && npBtn.dataset.original) {
-      npBtn.innerHTML = npBtn.dataset.original;
-    }
-  }
-  window.map.eachLayer(layer => {
-    if (layer.options && layer.options.npOverlay) {
-      window.map.removeLayer(layer);
-    }
-  });
-  
-  // Clear any search input and re-render the location list.
-  document.getElementById("locationSearch").value = "";
-  renderLocationList();
-});
-  
+  // Now process trails data for this location.
   const parkKey = getParkKeyFromUnitName(locationFeature.properties.unit_name);
   if (parkKey && trailsConfig[parkKey]) {
     fetchTrailsData(parkKey)
@@ -504,6 +549,7 @@ function showLocationDetailView(locationFeature) {
     }
   }
 }
+
 
 window.showLocationDetailView = showLocationDetailView;
 
