@@ -5,7 +5,7 @@ import { initMap } from './map.js';
 import { addMarkers, updateHeatLayer, removeHeatLayer } from './markers.js';
 import { toggleNPBoundaries, toggleStates } from './boundaries.js';
 import { setupUI, loadLocationBoundariesData } from './ui.js';
-import { toggleParkTrails } from './trails.js';
+import { toggleParkTrails, trailsConfig, removeParkTrailsToggleButton } from './trails.js';
 
 let missingData = [];
 window.globalMaxDate = 0;
@@ -271,6 +271,29 @@ if (trailsToggleButton) {
   });
 }
 
+// Initialize a global flag for the All Trails toggle.
+window.allTrailsActive = false;
+
+const allTrailsToggleButton = document.getElementById("allTrailsToggleButton");
+if (allTrailsToggleButton) {
+  allTrailsToggleButton.addEventListener("click", function() {
+    if (!window.allTrailsActive) {
+      // Add trails for every park.
+      Object.keys(trailsConfig).forEach(function(parkKey) {
+        toggleParkTrails(map, parkKey);
+      });
+      window.allTrailsActive = true;
+      allTrailsToggleButton.classList.add("active-toggle");
+    } else {
+      // Remove trails for every park.
+      Object.keys(trailsConfig).forEach(function(parkKey) {
+        removeParkTrailsToggleButton(map, parkKey);
+      });
+      window.allTrailsActive = false;
+      allTrailsToggleButton.classList.remove("active-toggle");
+    }
+  });
+}
 
 // Preload NP Boundaries (for Location List)
 async function loadNPBoundariesData() {

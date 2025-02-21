@@ -262,6 +262,10 @@ html, body {
   <img src="http://themissinglist.com/wp-content/uploads/2025/02/heat-map.png" alt="Heat Map Icon">
   <span>Heat Map</span>
 </button>
+<button id="allTrailsToggleButton">
+  <img src="http://themissinglist.com/wp-content/uploads/2025/02/map-2.png" alt="All Trails Icon">
+  <span>All Trails</span>
+</button>
 <button id="trailsToggleButton" style="display:none;">
   <img src="http://themissinglist.com/wp-content/uploads/2025/02/mountaineer.png" alt="Trails Icon">
   <span>Trails</span>
