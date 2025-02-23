@@ -1,7 +1,7 @@
 // assets/js/ui.js
 
 // Import trails configuration and data fetching functions.
-import { trailsConfig, fetchTrailsData, removeParkTrailsToggleButton } from './trails.js';
+import { trailsConfig, fetchTrailsData, removeParkTrailsToggleButton, toggleParkTrails } from './trails.js';
 window.showLocationDetailView = function(feature) {
   console.warn("showLocationDetailView placeholder invoked.");
 };
@@ -444,26 +444,52 @@ function showLocationDetailView(locationFeature, triggeredFromOverlay = false) {
     html += `<p>${locationFeature.properties.description}</p>`;
   }
   html += `
-    <div id="trailsList">
-      <h4>Trails Data Points</h4>
-      <label for="trailsSort">Sort By: </label>
-      <select id="trailsSort">
-        <option value="name-asc">Name A–Z</option>
-        <option value="name-desc">Name Z–A</option>
-        <option value="length-asc">Length (Low to High)</option>
-        <option value="length-desc">Length (High to Low)</option>
-      </select>
-      <div id="trailsFilters" style="margin-top: 5px;">
-        <label><input type="checkbox" class="trailsFilterCheckbox" value="route"> Route</label>
-        <label><input type="checkbox" class="trailsFilterCheckbox" value="type"> Type</label>
-        <label><input type="checkbox" class="trailsFilterCheckbox" value="natural"> Natural</label>
-        <label><input type="checkbox" class="trailsFilterCheckbox" value="amenity"> Amenity</label>
-        <label><input type="checkbox" class="trailsFilterCheckbox" value="tourism"> Tourism</label>
-      </div>
-      <ul id="trailsDataList"></ul>
+  <div id="trailsList">
+    <button id="toggleTrailsPOI" style="margin-bottom: 10px;">Trails and POI on</button>
+    <h4>Trails Data Points</h4>
+    <label for="trailsSort">Sort By: </label>
+    <select id="trailsSort">
+      <option value="name-asc">Name A–Z</option>
+      <option value="name-desc">Name Z–A</option>
+      <option value="length-asc">Length (Low to High)</option>
+      <option value="length-desc">Length (High to Low)</option>
+    </select>
+    <div id="trailsFilters" style="margin-top: 5px;">
+      <label><input type="checkbox" class="trailsFilterCheckbox" value="route"> Route</label>
+      <label><input type="checkbox" class="trailsFilterCheckbox" value="type"> Type</label>
+      <label><input type="checkbox" class="trailsFilterCheckbox" value="natural"> Natural</label>
+      <label><input type="checkbox" class="trailsFilterCheckbox" value="amenity"> Amenity</label>
+      <label><input type="checkbox" class="trailsFilterCheckbox" value="tourism"> Tourism</label>
     </div>
-  `;
+    <ul id="trailsDataList"></ul>
+  </div>
+`;
+
   infoContent.innerHTML = html;
+
+document.getElementById("toggleTrailsPOI").addEventListener("click", function() {
+  // Determine the park key for this location.
+  const parkKey = getParkKeyFromUnitName(locationFeature.properties.unit_name || locationFeature.properties.FORESTNAME);
+  if (!parkKey) return;
+
+  // Ensure we have a global flag object for tracking trails state.
+  window.trailsPOIActive = window.trailsPOIActive || {};
+
+  // Check current state for this park.
+  if (window.trailsPOIActive[parkKey]) {
+    // Trails are currently on; toggle them off.
+    toggleParkTrails(window.map, parkKey); // This function should remove the trails layer if it’s on.
+    window.trailsPOIActive[parkKey] = false;
+    this.textContent = "Trails and POI on";
+    console.log(`Trails and POI toggled off for ${parkKey}`);
+  } else {
+    // Trails are off; toggle them on.
+    toggleParkTrails(window.map, parkKey);
+    window.trailsPOIActive[parkKey] = true;
+    this.textContent = "Trails and POI off";
+    console.log(`Trails and POI toggled on for ${parkKey}`);
+  }
+});
 
   // Add overlay only if it’s not already present
   if (locationFeature.properties.FORESTNAME) {
