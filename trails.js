@@ -28,6 +28,9 @@ export const trailsConfig = {
   },
 
   // Add more parks as needed...
+  "angeles": {
+    url: "https://themissinglist.com/data/nfs/angeles_nf.geojson.gz"
+  },
 };
 
 // Cache for fetched trails data.

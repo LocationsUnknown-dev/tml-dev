@@ -4,6 +4,7 @@ import { loadDataFromAPI } from './api.js';
 import { initMap } from './map.js';
 import { addMarkers, updateHeatLayer, removeHeatLayer } from './markers.js';
 import { toggleNPBoundaries, toggleStates } from './boundaries.js';
+import { initNationalForestOverlay, toggleNationalForestOverlay } from './overlay.js';
 import { setupUI, loadLocationBoundariesData } from './ui.js';
 import { toggleParkTrails, trailsConfig, removeParkTrailsToggleButton } from './trails.js';
 
@@ -615,18 +616,7 @@ try {
     }
     setTimeout(() => { map.invalidateSize(); }, 200);
   });
-
-  // --------------------------
-  // National Forest Toggle Event Listener
-  // --------------------------
-  if (typeof nationalForestRef === "undefined") {
-    window.nationalForestRef = { layer: null };
-  }
-  nationalForestToggleButton.addEventListener("click", function() {
-    toggleNationalForestBoundaries(map, nationalForestRef, this);
-    setTimeout(() => { map.invalidateSize(); }, 200);
-  });
-
+  
 } catch (e) {
   console.error("Error setting up toggles:", e);
 }
@@ -706,6 +696,22 @@ function toggleNationalForestBoundaries(map, nfRef, button) {
     }
   }
 }
+
+// Create an object to hold the NF overlay layer reference.
+const nfRef = {};
+
+// Get the toggle button element.
+const nfToggleButton = document.getElementById("nationalForestToggleButton");
+
+// Initialize the National Forest overlay.
+initNationalForestOverlay(window.map, nfRef, nfToggleButton);
+
+nfToggleButton.addEventListener("click", function() {
+  toggleNationalForestOverlay(window.map, nfRef, nfToggleButton);
+});
+
+// Optionally, store nfRef in window for debugging or later use:
+window.nationalForestRef = nfRef;
 
 // ----------------------------------------------------------------------
 // Playback controls.

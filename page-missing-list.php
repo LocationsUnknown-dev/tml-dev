@@ -249,8 +249,7 @@ html, body {
   <button id="npBoundariesToggleButton">
   <img src="http://themissinglist.com/wp-content/uploads/2025/02/arches.png" alt="NP Boundaries Icon">
   <span>Natl. Parks</span>
-</button>
-  <button id="nationalForestToggleButton">
+<button id="nationalForestToggleButton" data-original='<img src="http://themissinglist.com/wp-content/uploads/2025/02/forest.png" alt="National Forest Icon"><span>Natl. Forest</span>'>
   <img src="http://themissinglist.com/wp-content/uploads/2025/02/forest.png" alt="National Forest Icon">
   <span>Natl. Forest</span>
 </button>

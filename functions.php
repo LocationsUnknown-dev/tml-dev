@@ -159,12 +159,16 @@ function your_theme_enqueue_scripts() {
 		wp_enqueue_script( 'leaflet-js', 'https://unpkg.com/leaflet@1.9.3/dist/leaflet.js', array(), '1.9.3', true );
 		wp_enqueue_script( 'markercluster-js', 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js', array( 'leaflet-js' ), '1.5.3', true );
 		wp_enqueue_script( 'leaflet-heat', 'https://unpkg.com/leaflet.heat/dist/leaflet-heat.js', array( 'leaflet-js' ), null, true );
+		wp_enqueue_script('papaparse', 'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js', array(), '5.3.2', true);
 
 		// Enqueue your custom modular script.
 		wp_enqueue_script( 'app-script', get_template_directory_uri() . '/assets/js/app.js', array(), '1.0', true );
 
 		// Enqueue the pako library for decompressing gzip files.
 		wp_enqueue_script( 'pako-js', 'https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js', array(), '2.1.0', true );
+
+		// Enqueue your custom overlay.js file. Adjust the path as needed.
+        wp_enqueue_script('overlay', get_template_directory_uri() . '/assets/js/overlay.js', array('leaflet','pako','papaparse'), '1.0', true);
 
 		// Enqueue the trails module.
 		wp_enqueue_script( 'trails-script', get_template_directory_uri() . '/assets/js/trails.js', array('leaflet-js', 'pako-js'), '1.0', true );
