@@ -546,7 +546,7 @@ try {
         nationalForestRef.layer = null;
       }
     } else {
-      if (map.hasLayer(satelliteTileButton)) map.removeLayer(satelliteTileLayer);
+      if (map.hasLayer(satelliteTileLayer)) map.removeLayer(satelliteTileLayer);
       map.addLayer(defaultTileLayer);
       satelliteToggleButton.innerHTML = satelliteToggleButton.dataset.original;
     }
