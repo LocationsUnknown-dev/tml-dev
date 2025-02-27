@@ -120,7 +120,7 @@ html, body {
 
 /* Expand on hover */
 #layersToggleContainer:hover {
-  width: 240px; /* Increased width to accommodate larger buttons */
+  width: 240px;
   height: auto;
 }
 
@@ -136,7 +136,6 @@ html, body {
   justify-content: center;
 }
 
-/* Ensure the image fits nicely */
 #layersToggleButton img {
   max-width: 80%;
   max-height: 80%;
@@ -147,8 +146,6 @@ html, body {
 #layersToggleContent {
   display: none;
   padding: 5px;
-  /* Use flex to arrange the toggle buttons */
-  display: flex;
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
@@ -159,7 +156,7 @@ html, body {
   display: flex;
 }
 
-/* Make the individual toggle buttons larger and square */
+/* Toggle button styling for layers */
 #layersToggleContent button {
   width: 80px;
   height: 80px;
@@ -168,20 +165,18 @@ html, body {
   border-radius: 4px;
   cursor: pointer;
   display: flex;
-  flex-direction: column; /* Stack icon and text vertically */
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: 14px;
 }
 
-/* Adjust image styling within the button */
 #layersToggleContent button img {
-  max-width: 60px; /* Adjust size as needed */
+  max-width: 60px;
   max-height: 60px;
   object-fit: contain;
 }
 
-/* Optional: Style the text within the button */
 #layersToggleContent button span {
   display: block;
   margin-top: 3px;
@@ -192,17 +187,58 @@ html, body {
   background: #e7e7e7;
 }
 
-/* Add a blue outline for active toggles */
 .active-toggle {
   outline: 2px solid blue;
 }
 
+/* Condensed and professional Legend styling */
+#legendContent {
+  display: none;
+  background: #fff;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+#legendContent h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+#legendList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#legendList li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+#legendList li img {
+  width: 28px;
+  height: 32px;
+  margin-right: 6px;
+  object-fit: contain;
+}
+
+#legendList li span {
+  font-size: 13px;
+  color: #555;
+}
 </style>
 
 <div id="content">
-  <!-- Filter Panel -->
+  <!-- Filter Panel (serves as both Filter and Legend toggle) -->
   <div id="filter">
-    <button id="toggleFilter" style="margin-bottom: 10px;">Collapse Filter</button>
+    <!-- Toggle Button: Initially shows "Expand Map Legend" -->
+    <button id="toggleLegend" style="margin-bottom: 10px;">Expand Map Legend</button>
+    
+    <!-- Original Filter Content -->
     <div id="filterContent">
       <h3>Filter Missing Persons</h3>
       <label for="age">Age (max): <span id="ageValue">--</span></label>
@@ -231,49 +267,53 @@ html, body {
       <p id="locationCount">Locations Mapped: <span id="locationsTotal">0</span></p>
       <p id="trailsCount">Trails &amp; POI Mapped: <span id="trailsTotal">0</span></p>
     </div>
+    
+    <!-- New Legend Content (hidden by default) -->
+    <div id="legendContent">
+      <h3>Map Legend</h3>
+      <ul id="legendList"></ul>
+    </div>
   </div>
   
   <!-- Map Container -->
   <div id="map">
-  <!-- Expandable Layers Toggle Container -->
-  <div id="layersToggleContainer">
-  <div id="layersToggleButton">
-    <img src="http://themissinglist.com/wp-content/uploads/2025/02/map-1.png" alt="Layers">
+    <!-- Expandable Layers Toggle Container -->
+    <div id="layersToggleContainer">
+      <div id="layersToggleButton">
+        <img src="http://themissinglist.com/wp-content/uploads/2025/02/map-1.png" alt="Layers">
+      </div>
+      <div id="layersToggleContent">
+        <button id="terrainToggleButton">
+          <img src="http://themissinglist.com/wp-content/uploads/2025/02/topographic.png" alt="Terrain Icon">
+          <span>Terrain</span>
+        </button>
+        <button id="satelliteToggleButton">Satellite</button>
+        <button id="npBoundariesToggleButton">
+          <img src="http://themissinglist.com/wp-content/uploads/2025/02/arches.png" alt="NP Boundaries Icon">
+          <span>Natl. Parks</span>
+        <button id="nationalForestToggleButton" data-original='<img src="http://themissinglist.com/wp-content/uploads/2025/02/forest.png" alt="National Forest Icon"><span>Natl. Forest</span>'>
+          <img src="http://themissinglist.com/wp-content/uploads/2025/02/forest.png" alt="National Forest Icon">
+          <span>Natl. Forest</span>
+        </button>
+        <button id="statesToggleButton">
+          <img src="http://themissinglist.com/wp-content/uploads/2025/02/map.png" alt="States Icon">
+          <span>States</span>
+        </button>
+        <button id="heatMapToggleButton">
+          <img src="http://themissinglist.com/wp-content/uploads/2025/02/heat-map.png" alt="Heat Map Icon">
+          <span>Heat Map</span>
+        </button>
+        <button id="allTrailsToggleButton">
+          <img src="http://themissinglist.com/wp-content/uploads/2025/02/map-2.png" alt="All Trails Icon">
+          <span>All Trails</span>
+        </button>
+        <button id="trailsToggleButton" style="display:none;">
+          <img src="http://themissinglist.com/wp-content/uploads/2025/02/mountaineer.png" alt="Trails Icon">
+          <span>Trails</span>
+        </button>
+      </div>
+    </div>
   </div>
-  <div id="layersToggleContent">
-  <button id="terrainToggleButton">
-    <img src="http://themissinglist.com/wp-content/uploads/2025/02/topographic.png" alt="Terrain Icon">
-    <span>Terrain</span>
-  </button>
-  <button id="satelliteToggleButton">Satellite</button>
-  <button id="npBoundariesToggleButton">
-  <img src="http://themissinglist.com/wp-content/uploads/2025/02/arches.png" alt="NP Boundaries Icon">
-  <span>Natl. Parks</span>
-<button id="nationalForestToggleButton" data-original='<img src="http://themissinglist.com/wp-content/uploads/2025/02/forest.png" alt="National Forest Icon"><span>Natl. Forest</span>'>
-  <img src="http://themissinglist.com/wp-content/uploads/2025/02/forest.png" alt="National Forest Icon">
-  <span>Natl. Forest</span>
-</button>
-  <button id="statesToggleButton">
-  <img src="http://themissinglist.com/wp-content/uploads/2025/02/map.png" alt="States Icon">
-  <span>States</span>
-</button>
-  <button id="heatMapToggleButton">
-  <img src="http://themissinglist.com/wp-content/uploads/2025/02/heat-map.png" alt="Heat Map Icon">
-  <span>Heat Map</span>
-</button>
-<button id="allTrailsToggleButton">
-  <img src="http://themissinglist.com/wp-content/uploads/2025/02/map-2.png" alt="All Trails Icon">
-  <span>All Trails</span>
-</button>
-<button id="trailsToggleButton" style="display:none;">
-  <img src="http://themissinglist.com/wp-content/uploads/2025/02/mountaineer.png" alt="Trails Icon">
-  <span>Trails</span>
-</button>
-</div>
-
-</div>
-  <!-- The rest of your map markup remains unchanged -->
-</div>
   
   <!-- Case List Panel (styled to match Filter) -->
   <div id="info">
@@ -303,14 +343,67 @@ html, body {
   <a href="https://www.flaticon.com/free-icons/terrain" title="terrain icons">
     Terrain icons created by Darius Dan - Flaticon
   </a>
-  </div>
+</div>
 <div id="attribution" style="text-align: center; padding: 10px 0; font-size: 12px;">
   <a href="https://www.flaticon.com/free-icons/surveillance" title="surveillance icons">
     Surveillance icons created by Eucalyp - Flaticon
   </a>
 </div>
 
+<script>
+// Toggle between Filter and Legend views
+document.getElementById('toggleLegend').addEventListener('click', function() {
+  const legendDiv = document.getElementById('legendContent');
+  const filterDiv = document.getElementById('filterContent');
+  if (legendDiv.style.display === 'none' || legendDiv.style.display === '') {
+    // Show legend, hide filter content, and update button text.
+    legendDiv.style.display = 'block';
+    filterDiv.style.display = 'none';
+    this.textContent = 'Collapse Map Legend';
+  } else {
+    // Hide legend, show filter content, and update button text.
+    legendDiv.style.display = 'none';
+    filterDiv.style.display = 'block';
+    this.textContent = 'Expand Map Legend';
+  }
+});
+
+// Define an array of legend items with icon URLs and labels.
+// (Adjust the labels as needed later.)
+const legendItems = [
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/placeholder_12339367.png", label: "Peak" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/location_8085844.png", label: "Spring" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/arches_18666823.png", label: "Arch" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/stone_10163153.png", label: "Rock" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/nature_13992531.png", label: "Cliff" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/canyon_10981901.png", label: "Gorge" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/cave_11420912.png", label: "Cave Entrance" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/pin_3251129.png", label: "Tree" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/parking_652271.png", label: "Parking" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/bath_11539443.png", label: "Toilets" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/water_9849745.png", label: "Drinking Water" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/location-pin_9425746.png", label: "Restaurant" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/home_5385604.png", label: "Shelter" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/search_3883726.png", label: "Information" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/fire_16775003.png", label: "Camp Site" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/statue_13447259.png", label: "Museum" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/picnic-table_17479031.png", label: "Picnic Table" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/waterfall_2881906.png", label: "Waterfall" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/obelisk_1395095.png", label: "Ruins" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/vase_1862599.png", label: "Archaeological Site" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/tools_13286009.png", label: "Mine/Mine Shaft" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/shipwreck_3605350.png", label: "Wreck" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/tourism_3307738.png", label: "Memorial" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/geology_6347983.png", label: "Boundary Stone" },
+  { icon: "https://themissinglist.com/wp-content/uploads/2025/02/fossil_4937565.png", label: "Palaeontological Site" }
+];
+
+const legendList = document.getElementById('legendList');
+legendItems.forEach(item => {
+  const li = document.createElement('li');
+  li.innerHTML = `<img src="${item.icon}" alt="${item.label}"><span>${item.label}</span>`;
+  legendList.appendChild(li);
+});
+</script>
 
 <?php get_footer(); ?>
-
-

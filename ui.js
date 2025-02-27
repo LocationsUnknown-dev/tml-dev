@@ -131,15 +131,43 @@ let currentSortedTrails = [];
 let selectedTrailLayer = null;
 
 function showSingleTrail(trailFeature, parkKey) {
+  // Remove any existing single trail layer from the map.
   if (selectedTrailLayer && window.map.hasLayer(selectedTrailLayer)) {
     window.map.removeLayer(selectedTrailLayer);
   }
+  // If a park key is provided, remove its trails toggle button.
   if (parkKey) {
     removeParkTrailsToggleButton(window.map, parkKey);
   }
+  // Create a new GeoJSON layer with a custom pointToLayer callback.
   selectedTrailLayer = L.geoJSON(trailFeature, {
     style: { color: "#FF5733", weight: 3 },
+    pointToLayer: function(feature, latlng) {
+      // Check if this feature is a Point.
+      if (feature.geometry && feature.geometry.type === "Point") {
+        // If the feature has a 'natural' property equal to "peak", use the custom icon.
+        if (
+          feature.properties &&
+          typeof feature.properties.natural === "string" &&
+          feature.properties.natural.trim().toLowerCase() === "peak"
+        ) {
+          const customTrailIcon = L.icon({
+            iconUrl: "https://themissinglist.com/wp-content/uploads/2025/02/placeholder_12339367.png",
+            iconSize: [32, 37],
+            iconAnchor: [16, 37],
+            popupAnchor: [0, -28]
+          });
+          return L.marker(latlng, { icon: customTrailIcon });
+        } else {
+          // Otherwise, use the default marker.
+          return L.marker(latlng);
+        }
+      }
+      // Fallback in case geometry is missing.
+      return L.marker(latlng);
+    },
     onEachFeature: function(feature, layer) {
+      // Build popup content from all properties except '@id'
       if (feature.properties) {
         let popupContent = "";
         Object.keys(feature.properties).forEach(key => {
@@ -151,8 +179,10 @@ function showSingleTrail(trailFeature, parkKey) {
       }
     }
   });
+  // Add the single trail layer to the map.
   window.map.addLayer(selectedTrailLayer);
   
+  // Zoom the map to the bounds of the trail feature.
   const trailBounds = getFeatureBounds(trailFeature);
   if (trailBounds.isValid()) {
     if (trailBounds.getNorth() === trailBounds.getSouth() && trailBounds.getEast() === trailBounds.getWest()) {
@@ -161,6 +191,8 @@ function showSingleTrail(trailFeature, parkKey) {
       window.map.fitBounds(trailBounds);
     }
   }
+  
+  // Optionally, open popups on all layers in the single trail layer.
   selectedTrailLayer.eachLayer(function(layer) {
     layer.openPopup();
   });
