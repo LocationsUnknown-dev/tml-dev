@@ -194,11 +194,17 @@ export function toggleParkTrails(map, parkKey) {
   if (layer && map.hasLayer(layer)) {
     console.log("Removing trails layer for park:", parkKey);
     map.removeLayer(layer);
+    if (window.currentTrailsLayer === layer) {
+      window.currentTrailsLayer = null;
+    }
+    updateLegendVisibility(); // Update legend to show all items when Trails & POI is off.  
     return;
   }
   if (layer) {
     console.log("Re-adding trails layer for park:", parkKey);
     map.addLayer(layer);
+    window.currentTrailsLayer = layer;
+    updateLegendVisibility();
     return;
   }
   // Get configuration for this park.
@@ -217,27 +223,35 @@ export function toggleParkTrails(map, parkKey) {
       
       // Helper function to create a custom marker based on feature properties.
       function createCustomMarker(feature, latlng) {
-        let iconUrl = null;
+        let iconUrl = null, category = "";
         if (feature.properties) {
           // Check "natural" property.
           if (feature.properties.natural) {
             const naturalVal = feature.properties.natural.trim().toLowerCase();
             if (naturalVal === "peak") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/placeholder_12339367.png";
+              category = "Peak";
             } else if (naturalVal === "spring") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/location_8085844.png";
+              category = "Spring";
             } else if (naturalVal === "arch") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/arches_18666823.png";
+              category = "Arch";
             } else if (naturalVal === "rock") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/stone_10163153.png";
+              category = "Rock";
             } else if (naturalVal === "cliff") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/nature_13992531.png";
+              category = "Cliff";
             } else if (naturalVal === "gorge") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/canyon_10981901.png";
+              category = "Gorge";
             } else if (naturalVal === "cave_entrance") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/cave_11420912.png";
+              category = "Cave Entrance";
             } else if (naturalVal === "tree") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/pin_3251129.png";
+              category = "Tree";
             }
           }
           // Check "amenity" property.
@@ -245,14 +259,19 @@ export function toggleParkTrails(map, parkKey) {
             const amenityVal = feature.properties.amenity.trim().toLowerCase();
             if (amenityVal === "parking") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/parking_652271.png";
+              category = "Parking";
             } else if (amenityVal === "toilets") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/bath_11539443.png";
+              category = "Toilets";
             } else if (amenityVal === "drinking_water") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/water_9849745.png";
+              category = "Drinking Water";
             } else if (amenityVal === "restaurant") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/location-pin_9425746.png";
+              category = "Restaurant";
             } else if (amenityVal === "shelter") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/home_5385604.png";
+              category = "Shelter";
             }
           }
           // Check "tourism" property.
@@ -260,10 +279,13 @@ export function toggleParkTrails(map, parkKey) {
             const tourismVal = feature.properties.tourism.trim().toLowerCase();
             if (tourismVal === "information") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/search_3883726.png";
+              category = "Information";
             } else if (tourismVal === "camp_site") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/fire_16775003.png";
+              category = "Camp Site";
             } else if (tourismVal === "museum") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/statue_13447259.png";
+              category = "Museum";
             }
           }
           // Check "leisure" property.
@@ -271,6 +293,7 @@ export function toggleParkTrails(map, parkKey) {
             const leisureVal = feature.properties.leisure.trim().toLowerCase();
             if (leisureVal === "picnic_table") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/picnic-table_17479031.png";
+              category = "Picnic Table";
             }
           }
           // Check "waterway" property.
@@ -278,6 +301,7 @@ export function toggleParkTrails(map, parkKey) {
             const waterwayVal = feature.properties.waterway.trim().toLowerCase();
             if (waterwayVal === "waterfall") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/waterfall_2881906.png";
+              category = "Waterfall";
             }
           }
           // Check "historic" property.
@@ -285,16 +309,22 @@ export function toggleParkTrails(map, parkKey) {
             const historicVal = feature.properties.historic.trim().toLowerCase();
             if (historicVal === "ruins") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/obelisk_1395095.png";
+              category = "Ruins";
             } else if (historicVal === "archaeological_site") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/vase_1862599.png";
+              category = "Archaeological Site";
             } else if (historicVal === "mine" || historicVal === "mine_shaft") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/tools_13286009.png";
+              category = "Mine/Mine Shaft";              
             } else if (historicVal === "wreck") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/shipwreck_3605350.png";
+              category = "Wreck";
             } else if (historicVal === "memorial") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/tourism_3307738.png";
+              category = "Memorial";
             } else if (historicVal === "boundary_stone") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/geology_6347983.png";
+              category = "Boundary Stone";
             }
           }
           // Check "geological" property.
@@ -302,6 +332,7 @@ export function toggleParkTrails(map, parkKey) {
             const geologicalVal = feature.properties.geological.trim().toLowerCase();
             if (geologicalVal === "palaeontological_site") {
               iconUrl = "https://themissinglist.com/wp-content/uploads/2025/02/fossil_4937565.png";
+              category = "Palaeontological Site";
             }
           }
         }
@@ -312,7 +343,9 @@ export function toggleParkTrails(map, parkKey) {
             iconAnchor: [16, 37],
             popupAnchor: [0, -28]
           });
-          return L.marker(latlng, { icon: customIcon });
+          const marker = L.marker(latlng, { icon: customIcon });
+          marker.legendCategory = category;  // Attach the legend category
+          return marker;
         }
         return L.marker(latlng);
       }
@@ -373,7 +406,9 @@ export function toggleParkTrails(map, parkKey) {
       });
       parkTrailsLayers[parkKey] = newLayer;
       map.addLayer(newLayer);
+      window.currentTrailsLayer = newLayer;
       console.log("Added trails layer for park:", parkKey);
+      updateLegendVisibility(); // Update legend based on the newly added layer.
     })
     .catch(error => {
       console.error(`Error loading trails for ${parkKey}:`, error);
