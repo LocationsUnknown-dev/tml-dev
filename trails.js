@@ -110,7 +110,7 @@ export const trailsConfig = {
  "basin": {
     url: "https://themissinglist.com/data/nps/basin_np.geojson.gz"
   },
- "sand": {
+ "great": {
     url: "https://themissinglist.com/data/nps/sand_np.geojson.gz"
   },
  "guadalupe": {
@@ -137,6 +137,45 @@ export const trailsConfig = {
  "mesa": {
     url: "https://themissinglist.com/data/nps/mesa_np.geojson.gz"
   },
+ "gorge": {
+    url: "https://themissinglist.com/data/nps/gorge_np.geojson.gz"
+  },
+ "indiana": {
+    url: "https://themissinglist.com/data/nps/indiana_np.geojson.gz"
+  },
+ "petrified": {
+    url: "https://themissinglist.com/data/nps/petrified_np.geojson.gz"
+  },
+ "redwood": {
+    url: "https://themissinglist.com/data/nps/redwood_np.geojson.gz"
+  },
+ "roosevelt": {
+    url: "https://themissinglist.com/data/nps/roosevelt_np.geojson.gz"
+  },
+ "royale": {
+    url: "https://themissinglist.com/data/nps/royale_np.geojson.gz"
+  },
+ "saguaro": {
+    url: "https://themissinglist.com/data/nps/saguaro_np.geojson.gz"
+  },
+ "samoa": {
+    url: "https://themissinglist.com/data/nps/samoa_np.geojson.gz"
+  },
+ "shenandoah": {
+    url: "https://themissinglist.com/data/nps/shenandoah_np.geojson.gz"
+  },
+ "virgin": {
+    url: "https://themissinglist.com/data/nps/virgin_np.geojson.gz"
+  },
+ "voyageurs": {
+    url: "https://themissinglist.com/data/nps/voyageurs_np.geojson.gz"
+  },
+ "white sand": {
+    url: "https://themissinglist.com/data/nps/white_np.geojson.gz"
+  },
+ "wind": {
+    url: "https://themissinglist.com/data/nps/wind_np.geojson.gz"
+  },
 
   // Add more parks as needed...
   "angeles": {
@@ -145,6 +184,10 @@ export const trailsConfig = {
   "nicolet": {
     url: "https://themissinglist.com/data/nfs/nicolet_nf.geojson.gz"
   },
+ "gifford": {
+    url: "https://themissinglist.com/data/nfs/gifford_nf.geojson.gz"
+  },
+
 };
 
 

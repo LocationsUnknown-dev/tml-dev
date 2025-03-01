@@ -135,3 +135,68 @@ export function toggleNationalForestOverlay(map, nfRef, button) {
     console.warn("NF overlay not loaded yet.");
   }
 }
+export function toggleBLMWLDNOverlay(map, blmRef, button) {
+  if (!button) {
+    console.error("BLM WLDN toggle button not found.");
+    return;
+  }
+  
+  // Initialize the button's original markup if not already set.
+  if (!button.dataset.original) {
+    button.dataset.original = button.innerHTML;
+  }
+  
+  if (blmRef.layer && map.hasLayer(blmRef.layer)) {
+    console.log("Removing BLM WLDN overlay layer");
+    map.removeLayer(blmRef.layer);
+    button.innerHTML = button.dataset.original;
+    blmRef.layer = null;
+  } else {
+    if (blmRef.layer) {
+      console.log("Re-adding BLM WLDN overlay layer");
+      map.addLayer(blmRef.layer);
+      button.innerHTML = "Remove BLM WLDN Area";
+    } else {
+      console.log("Fetching BLM WLDN Overlay GeoJSON");
+      fetch("https://themissinglist.com/data/BLM_Natl_Wilderness_Areas.geojson.gz")
+        .then(response => response.arrayBuffer())
+        .then(arrayBuffer => {
+          // Decompress the gzipped data using pako
+          const decompressed = window.pako.ungzip(new Uint8Array(arrayBuffer), { to: "string" });
+          const geojsonData = JSON.parse(decompressed);
+          // Create a GeoJSON layer with a style and interaction similar to the NP overlay.
+          const layer = L.geoJSON(geojsonData, {
+            // Tag this layer as a BLM overlay (optional)
+            blmOverlay: true,
+            // Use a style similar to the NP overlay but with a distinct color (orange in this case)
+            style: feature => ({ color: "#FF8C00", weight: 2, fillOpacity: 0.1 }),
+            onEachFeature: function(feature, layer) {
+              const displayName = (feature.properties && feature.properties.NLCS_NAME) 
+                                  ? feature.properties.NLCS_NAME 
+                                  : "BLM WLDN Area";
+              layer.bindPopup("<strong>" + displayName + "</strong>");
+              layer.on("click", function(e) {
+                L.DomEvent.stopPropagation(e);
+                const bounds = layer.getBounds();
+                if (bounds && bounds.isValid()) {
+                  map.fitBounds(bounds);
+                }
+                if (typeof window.showLocationDetailView === "function") {
+                  window.showLocationDetailView(feature, true);
+                }
+                // Optionally set a current key for additional integration (e.g. trails)
+                window.currentParkKey = "blm_wldn";
+              });
+            }
+          });
+          map.addLayer(layer);
+          blmRef.layer = layer;
+          button.innerHTML = "Remove BLM WLDN Area";
+          console.log("BLM WLDN overlay layer added");
+        })
+        .catch(error => {
+          console.error("Error loading BLM WLDN overlay GeoJSON:", error);
+        });
+    }
+  }
+}

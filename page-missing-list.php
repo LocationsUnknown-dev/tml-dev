@@ -332,6 +332,10 @@ html, body {
           <img src="http://themissinglist.com/wp-content/uploads/2025/02/mountaineer.png" alt="Trails Icon">
           <span>Trails</span>
         </button>
+        <button id="blmToggleButton">
+          <img src="https://themissinglist.com/wp-content/uploads/2025/03/location_11788771.png" alt="BLM WLDN Area Icon">
+          <span>BLM WLDN Area</span>
+        </button>
       </div>
     </div>
   </div>

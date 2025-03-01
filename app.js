@@ -4,7 +4,7 @@ import { loadDataFromAPI } from './api.js';
 import { initMap } from './map.js';
 import { addMarkers, updateHeatLayer, removeHeatLayer } from './markers.js';
 import { toggleNPBoundaries, toggleStates } from './boundaries.js';
-import { initNationalForestOverlay, toggleNationalForestOverlay } from './overlay.js';
+import { initNationalForestOverlay, toggleNationalForestOverlay, toggleBLMWLDNOverlay } from './overlay.js';
 import { setupUI, loadLocationBoundariesData } from './ui.js';
 import { toggleParkTrails, trailsConfig, removeParkTrailsToggleButton } from './trails.js';
 
@@ -296,11 +296,13 @@ if (allTrailsToggleButton) {
   });
 }
 
-// Preload NP Boundaries (for Location List)
+// Preload NP Boundaries (for Location List) using the gzipped file
 async function loadNPBoundariesData() {
   try {
-    const response = await fetch("https://themissinglist.com/data/US_National_Parks.geojson");
-    const data = await response.json();
+    const response = await fetch("https://themissinglist.com/data/US_National_Parks.geojson.gz");
+    const arrayBuffer = await response.arrayBuffer();
+    const decompressed = window.pako.ungzip(new Uint8Array(arrayBuffer), { to: 'string' });
+    const data = JSON.parse(decompressed);
     window.nationalParksData = data;
   } catch (error) {
     console.error("Error loading NP boundaries data:", error);
@@ -696,6 +698,21 @@ function toggleNationalForestBoundaries(map, nfRef, button) {
     }
   }
 }
+
+// --------------------------
+// BLM WLDN Overlay Toggle Event Listener
+// --------------------------
+const blmToggleButton = document.getElementById("blmToggleButton");
+if (blmToggleButton) {
+  const blmRef = {}; // Object to hold the BLM overlay layer reference
+  blmToggleButton.addEventListener("click", function() {
+    toggleBLMWLDNOverlay(window.map, blmRef, blmToggleButton);
+    setTimeout(() => { window.map.invalidateSize(); }, 200);
+  });
+  // Optionally, store the reference globally for debugging or later use.
+  window.blmRef = blmRef;
+}
+
 
 // Create an object to hold the NF overlay layer reference.
 const nfRef = {};
