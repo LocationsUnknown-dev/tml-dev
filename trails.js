@@ -177,7 +177,7 @@ export const trailsConfig = {
     url: "https://themissinglist.com/data/nps/wind_np.geojson.gz"
   },
 
-  // Add more parks as needed...
+  // Add more forests as needed...
   "angeles": {
     url: "https://themissinglist.com/data/nfs/angeles_nf.geojson.gz"
   },
@@ -187,6 +187,16 @@ export const trailsConfig = {
  "gifford": {
     url: "https://themissinglist.com/data/nfs/gifford_nf.geojson.gz"
   },
+  "cherokee": {
+    url: "https://themissinglist.com/data/nfs/cherokee_nf.geojson.gz"
+  },
+
+  // Add more blm lands as needed...
+  "hells": {
+    url: "https://themissinglist.com/data/blm/hells_wa_blm.geojson.gz"
+  },
+
+
 
 };
 

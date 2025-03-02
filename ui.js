@@ -515,7 +515,7 @@ function showLocationDetailView(locationFeature, triggeredFromOverlay = false) {
 
   document.getElementById("toggleTrailsPOI").addEventListener("click", function() {
     // Determine the park key for this location.
-    const parkKey = getParkKeyFromUnitName(locationFeature.properties.unit_name || locationFeature.properties.FORESTNAME);
+    const parkKey = getParkKeyFromUnitName(locationFeature.properties.unit_name || locationFeature.properties.FORESTNAME || locationFeature.properties.NLCS_NAME);
     if (!parkKey) return;
 
     // Ensure we have a global flag object for tracking trails state.
@@ -646,10 +646,13 @@ function showLocationDetailView(locationFeature, triggeredFromOverlay = false) {
     // Clear search input and re-render the location list.
     document.getElementById("locationSearch").value = "";
     renderLocationList();
+
+    // Reset the Trails & POI counter to the global total.
+    updateGlobalTrailsCounter();
   });
 
   // Fetch and display all trails for the parkKey
-  const parkKey = getParkKeyFromUnitName(locationFeature.properties.unit_name || locationFeature.properties.FORESTNAME);
+  const parkKey = getParkKeyFromUnitName(locationFeature.properties.unit_name || locationFeature.properties.FORESTNAME || locationFeature.properties.NLCS_NAME);
   if (parkKey && trailsConfig[parkKey]) {
     fetchTrailsData(parkKey)
       .then(geojsonData => {

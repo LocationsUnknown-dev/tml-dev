@@ -80,6 +80,9 @@ function updateLocationCounter() {
           locationName = feature.properties.unit_name.trim();
         } else if (feature.properties.FORESTNAME && feature.properties.FORESTNAME.trim()) {
           locationName = feature.properties.FORESTNAME.trim();
+        } else if (feature.properties.NLCS_NAME && feature.properties.NLCS_NAME.trim()) {
+          // This covers BLM locations.
+          locationName = feature.properties.NLCS_NAME.trim();
         }
         if (locationName !== "") {
           uniqueLocations[locationName] = true;
@@ -91,6 +94,7 @@ function updateLocationCounter() {
     document.getElementById("locationsTotal").textContent = 0;
   }
 }
+
 
 function showDetailView(item) {
   // Build the detailed popup content using your helper function.
