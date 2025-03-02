@@ -429,12 +429,25 @@ function showLocationDetailView(locationFeature, triggeredFromOverlay = false) {
   const infoContent = document.getElementById("infoContent");
   if (!infoContent) return;
 
-  // Determine the location type by its name.
+  // Store default bounds on the location feature (if not already stored)
+  if (locationFeature && locationFeature.geometry && !locationFeature.defaultBounds) {
+    const tempLayer = L.geoJSON(locationFeature);
+    let bounds = tempLayer.getBounds();
+    // If the feature is a single point (or very small), pad the bounds so we can zoom out
+    if (
+      bounds.isValid() &&
+      (bounds.getNorth() === bounds.getSouth() || bounds.getEast() === bounds.getWest())
+    ) {
+      bounds = bounds.pad(0.2); // adjust the padding factor as needed
+    }
+    locationFeature.defaultBounds = bounds;
+  }
+
+  // Determine the location name for auto overlay toggling
   const locationName = getLocationName(locationFeature).toLowerCase();
 
   if (!triggeredFromOverlay) {
     if (locationName.indexOf("national forest") !== -1) {
-      // Auto‑toggle National Forest overlay if not already on.
       if (
         !window.nationalForestRef ||
         !window.nationalForestRef.layer ||
@@ -448,14 +461,12 @@ function showLocationDetailView(locationFeature, triggeredFromOverlay = false) {
         }
       }
     } else if (locationName.indexOf("blm") !== -1 || (locationFeature.properties.NLCS_NAME && !locationFeature.properties.FORESTNAME)) {
-      // Auto‑toggle BLM overlay for BLM locations.
       const blmToggle = document.getElementById("blmToggleButton");
       if (blmToggle) {
         blmToggle.click();
         console.log("Automatically turned on BLM overlay for BLM location.");
       }
     } else if (locationName.indexOf("national park") !== -1) {
-      // Auto‑toggle National Park overlay if not already on.
       if (
         !window.npBoundariesRef ||
         !window.npBoundariesRef.layer ||
@@ -478,9 +489,12 @@ function showLocationDetailView(locationFeature, triggeredFromOverlay = false) {
     }
   }
 
-  // Build the info panel HTML
+  // Build the info panel HTML with two buttons:
+  // - "Back to List": Resets the map view to the global default
+  // - "Back to Location View": Zooms the map back to the default bounds for this location
   let html = `
     <button id="backToLocationList" style="margin-bottom: 10px;">Back to List</button>
+    <button id="backToLocationView" style="margin-bottom: 10px;">Back to Location View</button>
     <h3>${getLocationName(locationFeature) || "Unnamed Location"}</h3>
   `;
   if (locationFeature.properties.area) {
@@ -513,74 +527,11 @@ function showLocationDetailView(locationFeature, triggeredFromOverlay = false) {
 
   infoContent.innerHTML = html;
 
-  document.getElementById("toggleTrailsPOI").addEventListener("click", function() {
-    // Determine the park key for this location.
-    const parkKey = getParkKeyFromUnitName(locationFeature.properties.unit_name || locationFeature.properties.FORESTNAME || locationFeature.properties.NLCS_NAME);
-    if (!parkKey) return;
-
-    // Ensure we have a global flag object for tracking trails state.
-    window.trailsPOIActive = window.trailsPOIActive || {};
-
-    // Check current state for this park.
-    if (window.trailsPOIActive[parkKey]) {
-      // Trails are currently on; toggle them off.
-      toggleParkTrails(window.map, parkKey);
-      window.trailsPOIActive[parkKey] = false;
-      this.textContent = "Trails and POI on";
-      console.log(`Trails and POI toggled off for ${parkKey}`);
-    } else {
-      // Trails are off; toggle them on.
-      toggleParkTrails(window.map, parkKey);
-      window.trailsPOIActive[parkKey] = true;
-      this.textContent = "Trails and POI off";
-      console.log(`Trails and POI toggled on for ${parkKey}`);
-    }
-  });
-
-  // Add overlay only if it’s not already present
-  if (locationFeature.properties.FORESTNAME) {
-    // (National Forest handling)
-  } else if (locationFeature.properties.NLCS_NAME && !locationFeature.properties.FORESTNAME) {
-    // For BLM features: toggle BLM overlay if not already toggled.
-    if (!triggeredFromOverlay) {
-      const blmToggle = document.getElementById("blmToggleButton");
-      if (blmToggle) {
-        blmToggle.click();
-        console.log("Automatically turned on BLM overlay.");
-      }
-    }
-  } else {
-    // (National Park handling)
-    if (!triggeredFromOverlay) {
-      const npToggle = document.getElementById("npBoundariesToggleButton");
-      if (npToggle) {
-        npToggle.click();
-        console.log("Automatically turned on National Park overlay.");
-        window.autoNPOverlay = true;
-        const npInterval = setInterval(() => {
-          if (window.npBoundariesRef && window.npBoundariesRef.layer) {
-            autoClickOverlayFeature(window.npBoundariesRef.layer, locationFeature);
-            clearInterval(npInterval);
-          }
-        }, 500);
-      }
-    }
-  }
-
-  // Zoom to the location's bounds
-  if (locationFeature && locationFeature.geometry) {
-    const bounds = L.geoJSON(locationFeature).getBounds();
-    if (bounds.isValid()) {
-      window.map.fitBounds(bounds);
-    }
-  }
-
-  // Set up "Back to List" handler
+  // "Back to List" button functionality
   document.getElementById("backToLocationList").addEventListener("click", () => {
-    // Reset map view.
+    // Reset map view to the global default
     window.map.setView([39.8283, -98.5795], 4);
-
-    // Remove overlays.
+    // Remove overlays for National Forest, National Park, and BLM if present
     if (window.nationalForestRef && window.nationalForestRef.layer && window.map.hasLayer(window.nationalForestRef.layer)) {
       window.map.removeLayer(window.nationalForestRef.layer);
       const nfBtn = document.getElementById("nationalForestToggleButton");
@@ -606,7 +557,6 @@ function showLocationDetailView(locationFeature, triggeredFromOverlay = false) {
         window.map.removeLayer(layer);
       }
     });
-    // *** NEW: Remove BLM overlay if active ***
     if (window.blmRef && window.blmRef.layer && window.map.hasLayer(window.blmRef.layer)) {
       window.map.removeLayer(window.blmRef.layer);
       window.blmRef.layer = null;
@@ -620,39 +570,72 @@ function showLocationDetailView(locationFeature, triggeredFromOverlay = false) {
         window.map.removeLayer(layer);
       }
     });
-
-    // Close any open popup on the overlay feature.
-    if (locationFeature.properties.FORESTNAME && window.nationalForestRef && window.nationalForestRef.layer) {
-      window.nationalForestRef.layer.eachLayer(layer => {
-        if (layer.feature && getLocationName(layer.feature).toLowerCase() === getLocationName(locationFeature).toLowerCase()) {
-          layer.closePopup();
-        }
-      });
-    } else if (window.npBoundariesRef && window.npBoundariesRef.layer) {
-      window.npBoundariesRef.layer.eachLayer(layer => {
-        if (layer.feature && getLocationName(layer.feature).toLowerCase() === getLocationName(locationFeature).toLowerCase()) {
-          layer.closePopup();
-        }
-      });
-    }
-
-    // Hide the Trails toggle and clear current park key.
     const trailsBtn = document.getElementById("trailsToggleButton");
     if (trailsBtn) {
       trailsBtn.style.display = "none";
     }
     window.currentParkKey = null;
-
-    // Clear search input and re-render the location list.
     document.getElementById("locationSearch").value = "";
     renderLocationList();
-
-    // Reset the Trails & POI counter to the global total.
     updateGlobalTrailsCounter();
   });
 
-  // Fetch and display all trails for the parkKey
-  const parkKey = getParkKeyFromUnitName(locationFeature.properties.unit_name || locationFeature.properties.FORESTNAME || locationFeature.properties.NLCS_NAME);
+  // "Back to Location View" button functionality:
+  // Remove the selected trail marker and popup, then zoom back to the default bounds for the location.
+  document.getElementById("backToLocationView").addEventListener("click", () => {
+    // Remove the selected trail marker if it exists
+    if (selectedTrailLayer && window.map.hasLayer(selectedTrailLayer)) {
+      window.map.removeLayer(selectedTrailLayer);
+      selectedTrailLayer = null;
+    }
+    // Close any open popup on the map
+    window.map.closePopup();
+    
+    // Zoom back to the stored default bounds for the location
+    if (locationFeature.defaultBounds && locationFeature.defaultBounds.isValid()) {
+      window.map.fitBounds(locationFeature.defaultBounds);
+    } else if (locationFeature && locationFeature.geometry) {
+      const bounds = L.geoJSON(locationFeature).getBounds();
+      window.map.fitBounds(bounds);
+    }
+  });
+
+  // Setup Trails Data Points toggle
+  document.getElementById("toggleTrailsPOI").addEventListener("click", function() {
+    const parkKey = getParkKeyFromUnitName(
+      locationFeature.properties.unit_name ||
+      locationFeature.properties.FORESTNAME ||
+      locationFeature.properties.NLCS_NAME
+    );
+    if (!parkKey) return;
+    window.trailsPOIActive = window.trailsPOIActive || {};
+    if (window.trailsPOIActive[parkKey]) {
+      toggleParkTrails(window.map, parkKey);
+      window.trailsPOIActive[parkKey] = false;
+      this.textContent = "Trails and POI on";
+      console.log(`Trails and POI toggled off for ${parkKey}`);
+    } else {
+      toggleParkTrails(window.map, parkKey);
+      window.trailsPOIActive[parkKey] = true;
+      this.textContent = "Trails and POI off";
+      console.log(`Trails and POI toggled on for ${parkKey}`);
+    }
+  });
+
+  // Zoom to the location's bounds (default view) when the detail view is first shown
+  if (locationFeature && locationFeature.geometry) {
+    const bounds = L.geoJSON(locationFeature).getBounds();
+    if (bounds.isValid()) {
+      window.map.fitBounds(bounds);
+    }
+  }
+
+  // Fetch and display trails for the park (if applicable)
+  const parkKey = getParkKeyFromUnitName(
+    locationFeature.properties.unit_name ||
+    locationFeature.properties.FORESTNAME ||
+    locationFeature.properties.NLCS_NAME
+  );
   if (parkKey && trailsConfig[parkKey]) {
     fetchTrailsData(parkKey)
       .then(geojsonData => {
@@ -676,9 +659,6 @@ function showLocationDetailView(locationFeature, triggeredFromOverlay = false) {
     document.getElementById("trailsDataList").innerHTML = "";
   }
 }
-
-
-
 
 
 window.showLocationDetailView = showLocationDetailView;
