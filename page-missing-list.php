@@ -103,7 +103,14 @@ html, body {
   font-size: 14px;
 }
 
-/* Expandable Layers Toggle Container */
+/* New container for the two toggle buttons (Legend & About) */
+#filterToggleButtons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+/* Layers Toggle Container remains unchanged */
 #layersToggleContainer {
   position: absolute;
   top: 10px;
@@ -123,7 +130,6 @@ html, body {
   height: auto;
 }
 
-/* Header button using the image */
 #layersToggleButton {
   width: 100%;
   height: 60px;
@@ -141,7 +147,6 @@ html, body {
   object-fit: contain;
 }
 
-/* Expandable content container using flex layout */
 #layersToggleContent {
   display: none;
   padding: 5px;
@@ -154,7 +159,6 @@ html, body {
   display: flex;
 }
 
-/* Toggle button styling for layers */
 #layersToggleContent button {
   width: 80px;
   height: 80px;
@@ -180,7 +184,7 @@ html, body {
   margin-top: 3px;
   font-size: 12px;
 }
-  
+
 #layersToggleContent button:hover {
   background: #e7e7e7;
 }
@@ -189,7 +193,7 @@ html, body {
   outline: 2px solid blue;
 }
 
-/* Condensed and professional Legend styling */
+/* Legend styling */
 #legendContent {
   display: none;
   background: #fff;
@@ -244,17 +248,83 @@ html, body {
   color: #555;
 }
 
-/* Faded style for inactive legend items */
 #legendList li.inactive {
   opacity: 0.5;
+}
+
+/* --- New CSS for the About & Statistics overlay --- */
+#aboutStatsOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.95);
+  display: none; /* Hidden by default */
+  z-index: 900; /* Lower than layers toggle */
+}
+
+#aboutStatsBox {
+  position: relative;
+  width: 80%;
+  max-width: 600px;
+  margin: 50px auto;
+  background: #fff;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+#aboutStatsTabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 10px;
+}
+
+#aboutStatsTabs .tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  background: #f7f7f7;
+  border: 1px solid #ddd;
+  border-bottom: none;
+}
+
+#aboutStatsTabs .tab.active {
+  background: #fff;
+  font-weight: bold;
+}
+
+.tabContent {
+  display: none;
+}
+
+.tabContent.active {
+  display: block;
+}
+
+#closeAboutStats {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #ccc;
+  border: none;
+  padding: 5px 8px;
+  cursor: pointer;
+  border-radius: 3px;
 }
 </style>
 
 <div id="content">
-  <!-- Filter Panel (serves as both Filter and Legend toggle) -->
+  <!-- Filter Panel -->
   <div id="filter">
-    <!-- Toggle Button: Initially shows "Expand Map Legend" -->
-    <button id="toggleLegend" style="margin-bottom: 10px;">Expand Map Legend</button>
+    <!-- Toggle Buttons Container: Legend and About -->
+    <div id="filterToggleButtons">
+      <button id="toggleLegend">Expand Map Legend</button>
+      <button id="toggleAbout">About</button>
+    </div>
     
     <!-- Original Filter Content -->
     <div id="filterContent">
@@ -286,7 +356,7 @@ html, body {
       <p id="trailsCount">Trails &amp; POI Mapped: <span id="trailsTotal">0</span></p>
     </div>
     
-    <!-- New Legend Content (hidden by default) -->
+    <!-- Legend Content -->
     <div id="legendContent">
       <h3>
         <span>Map Legend</span>
@@ -338,9 +408,36 @@ html, body {
         </button>
       </div>
     </div>
+    
+    <!-- New About & Statistics Overlay -->
+    <div id="aboutStatsOverlay">
+      <div id="aboutStatsBox">
+        <button id="closeAboutStats">X</button>
+        <div id="aboutStatsTabs">
+          <button class="tab active" data-tab="aboutMap">About the map</button>
+          <button class="tab" data-tab="mapStats">Map Stats</button>
+          <button class="tab" data-tab="locationsStats">Locations Stats</button>
+          <button class="tab" data-tab="caseStats">Case Stats</button>
+        </div>
+        <div id="aboutStatsContent">
+          <div class="tabContent active" id="aboutMapContent">
+            <p>This map provides information about missing persons, including locations, case details, and various overlays such as national parks and forests. It combines dynamic filtering, playback controls, and interactive map layers to help users explore the data.</p>
+          </div>
+          <div class="tabContent" id="mapStatsContent">
+            <p>Map Stats: This section will display statistics about the map usage, total markers, active overlays, and more.</p>
+          </div>
+          <div class="tabContent" id="locationsStatsContent">
+            <p>Locations Stats: This section will provide statistics about the unique locations mapped, including count and distribution.</p>
+          </div>
+          <div class="tabContent" id="caseStatsContent">
+            <p>Case Stats: This section will show statistics about the cases, such as total cases, demographic breakdowns, and trends over time.</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   
-  <!-- Case List Panel (styled to match Filter) -->
+  <!-- Case List Panel -->
   <div id="info">
     <div id="infoHeader" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
       <h2>Case List</h2>
@@ -393,8 +490,36 @@ document.getElementById('toggleLegend').addEventListener('click', function() {
   }
 });
 
-// Define an array of legend items with icon URLs and labels.
-// (These labels should match the categories assigned in your marker creation code.)
+// --- About & Statistics Overlay Toggle & Tabs ---
+
+// Toggle About overlay when About button is clicked
+document.getElementById('toggleAbout').addEventListener('click', function() {
+  const overlay = document.getElementById('aboutStatsOverlay');
+  overlay.style.display = (overlay.style.display === 'none' || overlay.style.display === '') ? 'block' : 'none';
+});
+
+// Close button inside overlay
+document.getElementById('closeAboutStats').addEventListener('click', function() {
+  document.getElementById('aboutStatsOverlay').style.display = 'none';
+});
+
+// Tab switching logic for About & Stats overlay
+var tabs = document.querySelectorAll('#aboutStatsTabs .tab');
+tabs.forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    tabs.forEach(function(t) { t.classList.remove('active'); });
+    this.classList.add('active');
+    var contents = document.querySelectorAll('.tabContent');
+    contents.forEach(function(content) {
+      content.classList.remove('active');
+    });
+    var tabId = this.getAttribute('data-tab');
+    document.getElementById(tabId + 'Content').classList.add('active');
+  });
+});
+
+// --- Legend Building and Marker Filtering (existing code) ---
+
 const legendItems = [
   { icon: "https://themissinglist.com/wp-content/uploads/2025/02/placeholder_12339367.png", label: "Peak" },
   { icon: "https://themissinglist.com/wp-content/uploads/2025/02/location_8085844.png", label: "Spring" },
@@ -423,7 +548,11 @@ const legendItems = [
   { icon: "https://themissinglist.com/wp-content/uploads/2025/02/fossil_4937565.png", label: "Palaeontological Site" }
 ];
 
-// Build the legend list dynamically.
+const activeLegendCategories = {};
+legendItems.forEach(item => {
+  activeLegendCategories[item.label] = true;
+});
+
 const legendList = document.getElementById('legendList');
 legendItems.forEach(item => {
   const li = document.createElement('li');
@@ -431,14 +560,6 @@ legendItems.forEach(item => {
   legendList.appendChild(li);
 });
 
-// Maintain a record of which legend categories are active.
-// Initially, all categories are active.
-const activeLegendCategories = {};
-legendItems.forEach(item => {
-  activeLegendCategories[item.label] = true;
-});
-
-// When a legend item is clicked, toggle its active state and update markers.
 legendList.querySelectorAll("li").forEach(li => {
   li.addEventListener("click", function() {
     const label = li.querySelector("span").textContent;
@@ -448,63 +569,39 @@ legendList.querySelectorAll("li").forEach(li => {
   });
 });
 
-// "Toggle All On/Off" button functionality.
 document.getElementById("toggleAllLegend").addEventListener("click", function(e) {
-  // Prevent event propagation if needed.
   e.stopPropagation();
-  // Check if all are active.
   let allActive = true;
   for (const key in activeLegendCategories) {
-    if (!activeLegendCategories[key]) {
-      allActive = false;
-      break;
-    }
+    if (!activeLegendCategories[key]) { allActive = false; break; }
   }
-  // Toggle all: if all are active, set all to inactive, else set all to active.
   const newState = !allActive;
   for (const key in activeLegendCategories) {
     activeLegendCategories[key] = newState;
   }
-  // Update the CSS class for all legend items.
   legendList.querySelectorAll("li").forEach(li => {
     const label = li.querySelector("span").textContent;
-    if (activeLegendCategories[label]) {
-      li.classList.remove("inactive");
-    } else {
-      li.classList.add("inactive");
-    }
+    if (activeLegendCategories[label]) { li.classList.remove("inactive"); }
+    else { li.classList.add("inactive"); }
   });
   updateMarkersVisibility();
 });
 
-// This function checks which legend categories are present in the current trails layer.
-// If no trails layer is active, all legend items are shown.
 function updateLegendVisibility() {
   if (!window.currentTrailsLayer) {
-    // Trails & POI is off—show all legend items.
-    document.querySelectorAll('#legendList li').forEach(function(li) {
-      li.style.display = '';
-    });
+    document.querySelectorAll('#legendList li').forEach(function(li) { li.style.display = ''; });
     return;
   }
   let presentCategories = {};
   window.currentTrailsLayer.eachLayer(function(marker) {
-    if (marker.legendCategory) {
-      presentCategories[marker.legendCategory] = true;
-    }
+    if (marker.legendCategory) { presentCategories[marker.legendCategory] = true; }
   });
-  // Loop over legend items: show if present, hide otherwise.
   document.querySelectorAll('#legendList li').forEach(function(li) {
     const label = li.querySelector('span').textContent;
-    if (presentCategories[label]) {
-      li.style.display = '';
-    } else {
-      li.style.display = 'none';
-    }
+    li.style.display = presentCategories[label] ? '' : 'none';
   });
 }
 
-// Update markers visibility and then update the legend.
 function updateMarkersVisibility() {
   if (!window.currentTrailsLayer) return;
   window.currentTrailsLayer.eachLayer(function(marker) {
@@ -518,10 +615,6 @@ function updateMarkersVisibility() {
   });
   updateLegendVisibility();
 }
-
-// NOTE: For this filtering to work, your marker creation (in your trails code)
-// must attach a property "legendCategory" to each marker (as shown in the createCustomMarker function).
-// Also, when adding a park’s trails layer (in toggleParkTrails), assign it to window.currentTrailsLayer.
 </script>
 
 <?php get_footer(); ?>
