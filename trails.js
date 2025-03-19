@@ -190,12 +190,96 @@ export const trailsConfig = {
   "cherokee": {
     url: "https://themissinglist.com/data/nfs/cherokee_nf.geojson.gz"
   },
+  "columbia": {
+    url: "https://themissinglist.com/data/nfs/columbia_nf.geojson.gz"
+  },
+  "colville": {
+    url: "https://themissinglist.com/data/nfs/colville_nf.geojson.gz"
+  },
+  "daniel": {
+    url: "https://themissinglist.com/data/nfs/daniel_nf.geojson.gz"
+  },
+  "hood": {
+    url: "https://themissinglist.com/data/nfs/hood_nf.geojson.gz"
+  },
+  "kisatchie": {
+    url: "https://themissinglist.com/data/nfs/kisatchie_nf.geojson.gz"
+  },
+  "malheur": {
+    url: "https://themissinglist.com/data/nfs/malheur_nf.geojson.gz"
+  },
+  "ochoco": {
+    url: "https://themissinglist.com/data/nfs/ochoco_nf.geojson.gz"
+  },
+  "oconee": {
+    url: "https://themissinglist.com/data/nfs/oconee_nf.geojson.gz"
+  },
+  "okanogan": {
+    url: "https://themissinglist.com/data/nfs/okanogan_nf.geojson.gz"
+  },
+  "siskiyou": {
+    url: "https://themissinglist.com/data/nfs/siskiyou_nf.geojson.gz"
+  },
+  "siuslaw": {
+    url: "https://themissinglist.com/data/nfs/siuslaw_nf.geojson.gz"
+  },
+  "snoqualmie": {
+    url: "https://themissinglist.com/data/nfs/snoqualmie_nf.geojson.gz"
+  },
+  "umatilla": {
+    url: "https://themissinglist.com/data/nfs/umatilla_nf.geojson.gz"
+  },
+  "umpqua": {
+    url: "https://themissinglist.com/data/nfs/umpqua_nf.geojson.gz"
+  },
+  "wallowa": {
+    url: "https://themissinglist.com/data/nfs/wallowa_nf.geojson.gz"
+  },
+  "willamette": {
+    url: "https://themissinglist.com/data/nfs/willamette_nf.geojson.gz"
+  },
+  "allegheny": {
+    url: "https://themissinglist.com/data/nfs/allegheny_nf.geojson.gz"
+  },
+  "ashley": {
+    url: "https://themissinglist.com/data/nfs/ashley_nf.geojson.gz"
+  },
+  "beaverhead": {
+    url: "https://themissinglist.com/data/nfs/beaverhead_nf.geojson.gz"
+  },
+  "bighorn": {
+    url: "https://themissinglist.com/data/nfs/horn_nf.geojson.gz"
+  },
+  "bitterroot": {
+    url: "https://themissinglist.com/data/nfs/bitterroot_nf.geojson.gz"
+  },
+  "black": {
+    url: "https://themissinglist.com/data/nfs/black_nf.geojson.gz"
+  },
+  "boise": {
+    url: "https://themissinglist.com/data/nfs/boise_nf.geojson.gz"
+  },
+  "bridger": {
+    url: "https://themissinglist.com/data/nfs/bridger_nf.geojson.gz"
+  },
+  "caribou": {
+    url: "https://themissinglist.com/data/nfs/caribou_nf.geojson.gz"
+  },
+  "carson": {
+    url: "https://themissinglist.com/data/nfs/carson_nf.geojson.gz"
+  },
+  "chippewa": {
+    url: "https://themissinglist.com/data/nfs/chippewa_nf.geojson.gz"
+  },
+
+
+
 
   // Add more blm lands as needed...
   "hells": {
     url: "https://themissinglist.com/data/blm/hells_wa_blm.geojson.gz"
   },
-
+  
 
 
 };
@@ -389,19 +473,30 @@ export function toggleParkTrails(map, parkKey) {
             }
           }
         }
-        if (iconUrl) {
-          const customIcon = L.icon({
-            iconUrl: iconUrl,
-            iconSize: [32, 37],
-            iconAnchor: [16, 37],
-            popupAnchor: [0, -28]
-          });
-          const marker = L.marker(latlng, { icon: customIcon });
-          marker.legendCategory = category;  // Attach the legend category
-          return marker;
-        }
-        return L.marker(latlng);
-      }
+        if (!category) {
+    category = "Other";
+  }
+  
+  // Debug: Log the feature and determined category.
+  console.log("Creating marker for feature:", feature.properties, "=> category:", category);
+
+  // Create the marker with a custom icon if available.
+  if (iconUrl) {
+    const customIcon = L.icon({
+      iconUrl: iconUrl,
+      iconSize: [32, 37],
+      iconAnchor: [16, 37],
+      popupAnchor: [0, -28]
+    });
+    const marker = L.marker(latlng, { icon: customIcon });
+    marker.legendCategory = category;
+    return marker;
+  } else {
+    const marker = L.marker(latlng);
+    marker.legendCategory = category;
+    return marker;
+  }
+}
       
       // Create a new GeoJSON layer with a custom pointToLayer callback.
       const newLayer = L.geoJSON(geojsonData, {
@@ -409,8 +504,12 @@ export function toggleParkTrails(map, parkKey) {
         pointToLayer: function(feature, latlng) {
           if (feature.geometry && feature.geometry.type === "Point") {
             return createCustomMarker(feature, latlng);
+          } else {
+            const marker = L.marker(latlng);
+            marker.legendCategory = "Other";
+            return marker;
           }
-          return L.marker(latlng);
+          
         },
         onEachFeature: function(feature, layer) {
           let popupContent = "";

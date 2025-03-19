@@ -266,8 +266,8 @@ html, body {
 
 #aboutStatsBox {
   position: relative;
-  width: 80%;
-  max-width: 600px;
+  width: 100%;
+  max-width: 900px;
   margin: 50px auto;
   background: #fff;
   padding: 20px;
@@ -615,6 +615,9 @@ function updateMarkersVisibility() {
   });
   updateLegendVisibility();
 }
+
 </script>
+
+<script src="<?php echo get_template_directory_uri(); ?>/assets/js/stats.js"></script>
 
 <?php get_footer(); ?>
